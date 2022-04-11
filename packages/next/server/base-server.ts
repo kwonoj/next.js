@@ -392,6 +392,7 @@ export default abstract class Server {
     res: BaseNextResponse,
     parsedUrl?: NextUrlWithParsedQuery
   ): Promise<void> {
+    console.log('--------------')
     try {
       const urlParts = (req.url || '').split('?')
       const urlNoQuery = urlParts[0]
