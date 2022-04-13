@@ -65,6 +65,7 @@ import { createHeaderRoute, createRedirectRoute } from './server-route-utils'
 import { PrerenderManifest } from '../build'
 import { ImageConfigComplete } from '../shared/lib/image-config'
 import { replaceBasePath } from './router-utils'
+import { startSpan } from './lib/trace'
 
 export type FindComponentsResult = {
   components: LoadComponentsReturnType
@@ -392,19 +393,28 @@ export default abstract class Server {
     res: BaseNextResponse,
     parsedUrl?: NextUrlWithParsedQuery
   ): Promise<void> {
-    console.log('--------------')
+    const requestSpanRoot = startSpan(`base ${req.method} ${req.url}`)
+
     try {
       const urlParts = (req.url || '').split('?')
       const urlNoQuery = urlParts[0]
 
       if (urlNoQuery?.match(/(\\|\/\/)/)) {
+        const removeSlashSpan = startSpan(
+          'normalizeRepeatedSlashes',
+          requestSpanRoot
+        )
         const cleanUrl = normalizeRepeatedSlashes(req.url!)
         res.redirect(cleanUrl, 308).body(cleanUrl).send()
+        removeSlashSpan.end()
         return
       }
 
+      const setLazyPropSpan = startSpan('setLazyPropSpan', requestSpanRoot)
       setLazyProp({ req: req as any }, 'cookies', getCookieParser(req.headers))
+      setLazyPropSpan.end()
 
+      const parseUrlSpan = startSpan('parseUrl', requestSpanRoot)
       // Parse url if parsedUrl not provided
       if (!parsedUrl || typeof parsedUrl !== 'object') {
         parsedUrl = parseUrl(req.url!, true)
@@ -434,7 +444,9 @@ export default abstract class Server {
         req.url = replaceBasePath(req.url!, this.nextConfig.basePath)
         addRequestMeta(req, '_nextHadBasePath', true)
       }
+      parseUrlSpan.end()
 
+      const setMetadaSpan = startSpan('setMetadaSpan', requestSpanRoot)
       if (
         this.minimalMode &&
         req.headers['x-matched-path'] &&
@@ -548,6 +560,8 @@ export default abstract class Server {
             res.statusCode = 400
             return this.renderError(null, req, res, '/_error', {})
           }
+
+          setMetadaSpan.end()
           throw err
         }
 
@@ -584,11 +598,17 @@ export default abstract class Server {
           .redirect(url.locale.redirect, TEMPORARY_REDIRECT_STATUS)
           .body(url.locale.redirect)
           .send()
+        setMetadaSpan.end()
         return
       }
 
+      setMetadaSpan.end()
+
       res.statusCode = 200
-      return await this.run(req, res, parsedUrl)
+      const runSpan = startSpan('run', requestSpanRoot)
+      let ret = await this.run(req, res, parsedUrl)
+      runSpan.end()
+      return ret
     } catch (err: any) {
       if (
         (err && typeof err === 'object' && err.code === 'ERR_INVALID_URL') ||
@@ -604,6 +624,8 @@ export default abstract class Server {
       this.logError(getProperError(err))
       res.statusCode = 500
       res.body('Internal Server Error').send()
+    } finally {
+      requestSpanRoot.end()
     }
   }
 

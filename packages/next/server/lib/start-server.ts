@@ -2,6 +2,7 @@ import type { NextServerOptions, NextServer, RequestHandler } from '../next'
 import { warn } from '../../build/output/log'
 import http from 'http'
 import next from '../next'
+import { initializeTraceOnce } from './trace'
 
 interface StartServerOptions extends NextServerOptions {
   allowRetry?: boolean
@@ -9,6 +10,8 @@ interface StartServerOptions extends NextServerOptions {
 
 export function startServer(opts: StartServerOptions) {
   let requestHandler: RequestHandler
+
+  initializeTraceOnce()
 
   const server = http.createServer((req, res) => {
     return requestHandler(req, res)

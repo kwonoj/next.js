@@ -69,7 +69,15 @@
     ]
   },
   "dependencies": {
+    "@grpc/grpc-js": "1.6.3",
     "@next/env": "12.1.5-canary.5",
+    "@opentelemetry/api": "1.0.4",
+    "@opentelemetry/exporter-collector": "0.25.0",
+    "@opentelemetry/exporter-trace-otlp-grpc": "0.27.0",
+    "@opentelemetry/instrumentation": "0.27.0",
+    "@opentelemetry/resources": "1.0.1",
+    "@opentelemetry/sdk-trace-base": "1.0.1",
+    "@opentelemetry/semantic-conventions": "1.0.1",
     "caniuse-lite": "^1.0.30001283",
     "postcss": "8.4.5",
     "styled-jsx": "5.0.1"
