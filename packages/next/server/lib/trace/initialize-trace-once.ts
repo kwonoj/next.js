@@ -13,6 +13,7 @@ import {
 const buildExporter = (
   options: TraceExporterGrpc | TraceExporterHttp | TraceExporterProtobuf
 ) => {
+  /*
   switch (options.type) {
     case 'grpc':
       const {
@@ -59,7 +60,9 @@ const buildExporter = (
       return new OTLPTraceExporterProto(options)
     default:
       throw new Error(`Unexpected exporter type specified`)
-  }
+  }*/
+
+  throw new Error('not implemented')
 }
 
 /**
