@@ -801,8 +801,10 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "d39cd93900197114fa1fcb7ae84ca742095eed9442088988ae74fa744e930e77"
 dependencies = [
  "cfg-if 1.0.0",
+ "js-sys",
  "libc",
  "wasi",
+ "wasm-bindgen",
 ]
 
 [[package]]
@@ -1333,6 +1335,8 @@ dependencies = [
  "testing",
  "tracing",
  "walkdir",
+ "wasmer",
+ "wasmer-wasi",
 ]
 
 [[package]]
@@ -2155,6 +2159,12 @@ name = "siphasher"
 version = "0.3.10"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "7bd3e3206899af3f8b12af284fafc038cc1dc2b41d1b89dd17297221c5d225de"
+
+[[package]]
+name = "slab"
+version = "0.4.6"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "eb703cfe953bccee95685111adeedb76fabe4e97549a58d16f03ea7b9367bb32"
 
 [[package]]
 name = "smallvec"
@@ -3651,6 +3661,7 @@ version = "0.0.0"
 dependencies = [
  "anyhow",
  "console_error_panic_hook",
+ "getrandom",
  "next-swc",
  "once_cell",
  "parking_lot_core 0.8.0",
@@ -3660,9 +3671,12 @@ dependencies = [
  "swc",
  "swc_common",
  "swc_ecmascript",
+ "swc_plugin_runner",
  "tracing",
  "wasm-bindgen",
  "wasm-bindgen-futures",
+ "wasmer",
+ "wasmer-wasi",
 ]
 
 [[package]]
@@ -3755,6 +3769,7 @@ dependencies = [
  "wasmer-engine-universal",
  "wasmer-types",
  "wasmer-vm",
+ "wasmparser",
  "wat",
  "winapi",
 ]
@@ -3922,6 +3937,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "f02fc47308cf5cf2cc039ec61c098773320b3d3c099434f20580bd143beee63b"
 dependencies = [
  "libc",
+ "slab",
  "thiserror",
  "tracing",
 ]
