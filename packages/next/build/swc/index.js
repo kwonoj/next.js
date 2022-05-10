@@ -150,6 +150,7 @@ async function loadWasm(importPath = '') {
       }
       return wasmBindings
     } catch (e) {
+      throw e
       // Only log attempts for loading wasm when loading as fallback
       if (importPath) {
         if (e?.code === 'ERR_MODULE_NOT_FOUND') {
@@ -174,12 +175,19 @@ function loadNative() {
   let bindings
   let attempts = []
 
+  let ee = [];
   for (const triple of triples) {
     try {
       bindings = require(`@next/swc/native/next-swc.${triple.platformArchABI}.node`)
       Log.info('Using locally built binary of @next/swc')
       break
-    } catch (e) {}
+    } catch (e) {
+      ee.push(e)
+    }
+  }
+
+  if (ee.length > 0) {
+    throw ee
   }
 
   if (!bindings) {
@@ -189,6 +197,8 @@ function loadNative() {
         bindings = require(pkg)
         break
       } catch (e) {
+        throw e
+
         if (e?.code === 'MODULE_NOT_FOUND') {
           attempts.push(`Attempted to load ${pkg}, but it was not installed`)
         } else {

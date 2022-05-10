@@ -207,7 +207,9 @@ jobs:
           name: next-swc-test-binary
           path: packages/next-swc/native
 
-      - run: node run-tests.js --type unit
+      - run: |
+          ls -al packages/next-swc/native
+          node run-tests.js --type unit
         if: ${{needs.build.outputs.docsChange != 'docs only change'}}
 
   testDev:

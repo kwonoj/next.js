@@ -1,0 +1,1 @@
+require('./packages/next-swc/native/next-swc.linux-x64-gnu.node');
