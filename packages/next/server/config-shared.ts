@@ -151,6 +151,9 @@ export interface ExperimentalConfig {
   }
   adjustFontFallbacks?: boolean
   fontLoaders?: { [fontLoader: string]: any }
+  trace?: {
+    serviceName: string
+  }
 }
 
 export type ExportPathMap = {
