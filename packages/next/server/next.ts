@@ -14,6 +14,7 @@ import { IncomingMessage, ServerResponse } from 'http'
 import { NextUrlWithParsedQuery } from './request-meta'
 import { shouldUseReactRoot } from './utils'
 import { initializeTraceOnce } from './lib/trace/initialize-trace-once'
+import { getTracer } from './lib/trace/tracer'
 
 let ServerImpl: typeof Server
 
@@ -152,14 +153,17 @@ export class NextServer {
         // prior to this will be silently ignored.
         initializeTraceOnce(conf?.experimental?.trace)
 
-        this.server = await this.createServer({
-          ...this.options,
-          conf,
+        // This'll be the root span for the next/server trace
+        return getTracer().trace('NextServer.createServer', async () => {
+          this.server = await this.createServer({
+            ...this.options,
+            conf,
+          })
+          if (this.preparedAssetPrefix) {
+            this.server.setAssetPrefix(this.preparedAssetPrefix)
+          }
+          return this.server
         })
-        if (this.preparedAssetPrefix) {
-          this.server.setAssetPrefix(this.preparedAssetPrefix)
-        }
-        return this.server
       })
     }
     return this.serverPromise
@@ -169,7 +173,10 @@ export class NextServer {
     // Memoize request handler creation
     if (!this.reqHandlerPromise) {
       this.reqHandlerPromise = this.getServer().then((server) =>
-        server.getRequestHandler().bind(server)
+        getTracer().wrap(
+          'getServerRequestHandler',
+          server.getRequestHandler().bind(server)
+        )
       )
     }
     return this.reqHandlerPromise

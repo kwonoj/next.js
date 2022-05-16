@@ -18,6 +18,7 @@ import { join } from 'path'
 import { requirePage, getPagePath } from './require'
 import { BuildManifest } from './get-page-files'
 import { interopDefault } from '../lib/interop-default'
+import { getTracer } from './lib/trace/tracer'
 
 export type ManifestItem = {
   id: number | string
@@ -41,7 +42,7 @@ export type LoadComponentsReturnType = {
   isAppPath?: boolean
 }
 
-export async function loadDefaultErrorComponents(distDir: string) {
+async function loadDefaultErrorComponentsImpl(distDir: string) {
   const Document = interopDefault(require('next/dist/pages/_document'))
   const AppMod = require('next/dist/pages/_app')
   const App = interopDefault(AppMod)
@@ -59,7 +60,12 @@ export async function loadDefaultErrorComponents(distDir: string) {
   }
 }
 
-export async function loadComponents(
+export const loadDefaultErrorComponents = getTracer().wrap(
+  'loadComponents.loadDefaultErrorComponents',
+  loadDefaultErrorComponentsImpl
+)
+
+async function loadComponentsImpl(
   distDir: string,
   pathname: string,
   serverless: boolean,
@@ -155,3 +161,8 @@ export async function loadComponents(
     isAppPath,
   }
 }
+
+export const loadComponents = getTracer().wrap(
+  'loadComponents.loadComponents',
+  loadComponentsImpl
+)
