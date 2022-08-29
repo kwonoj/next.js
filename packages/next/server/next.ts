@@ -15,6 +15,7 @@ import { NextUrlWithParsedQuery } from './request-meta'
 import { shouldUseReactRoot } from './utils'
 import { initializeTraceOnce } from './lib/trace/initialize-trace-once'
 import { getTracer } from './lib/trace/tracer'
+import { NextServerSpan } from './lib/trace/constants'
 
 let ServerImpl: typeof Server
 
@@ -59,7 +60,7 @@ export class NextServer {
       res: ServerResponse,
       parsedUrl?: UrlWithParsedQuery
     ) => {
-      return getTracer().trace('NextServer.getRequestHandler', async () => {
+      return getTracer().trace(NextServerSpan.getRequestHandler, async () => {
         const requestHandler = await this.getServerRequestHandler()
         return requestHandler(req, res, parsedUrl)
       })
@@ -156,7 +157,7 @@ export class NextServer {
         initializeTraceOnce(conf?.experimental?.trace)
 
         // This'll be the root span for the next/server trace
-        return getTracer().trace('NextServer.getServer', async () => {
+        return getTracer().trace(NextServerSpan.getServer, async () => {
           this.server = await this.createServer({
             ...this.options,
             conf,
@@ -176,7 +177,7 @@ export class NextServer {
     if (!this.reqHandlerPromise) {
       this.reqHandlerPromise = this.getServer().then((server) =>
         getTracer().wrap(
-          'NextServer.getServerRequestHandler',
+          NextServerSpan.getServerRequestHandler,
           server.getRequestHandler().bind(server)
         )
       )
@@ -215,7 +216,7 @@ function createServerImpl(options: NextServerOptions): NextServer {
 }
 
 const createServer = getTracer().wrap(
-  'createServer.createServer',
+  NextServerSpan.createServer,
   createServerImpl
 )
 

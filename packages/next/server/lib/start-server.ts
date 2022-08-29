@@ -3,6 +3,7 @@ import { warn } from '../../build/output/log'
 import http from 'http'
 import next from '../next'
 import { getTracer } from './trace/tracer'
+import { StartServerSpan } from './trace/constants'
 
 interface StartServerOptions extends NextServerOptions {
   allowRetry?: boolean
@@ -73,6 +74,6 @@ function startServerImpl(opts: StartServerOptions) {
 }
 
 export const startServer = getTracer().wrap(
-  'startServer.startServer',
+  StartServerSpan.startServer,
   startServerImpl
 )

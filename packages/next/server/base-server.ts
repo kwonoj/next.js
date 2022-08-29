@@ -69,6 +69,7 @@ import { getHostname } from '../shared/lib/get-hostname'
 import { parseUrl as parseUrlUtil } from '../shared/lib/router/utils/parse-url'
 import { getNextPathnameInfo } from '../shared/lib/router/utils/get-next-pathname-info'
 import { getTracer, SpanStatusCode } from './lib/trace/tracer'
+import { BaseServerSpan } from './lib/trace/constants'
 
 export type FindComponentsResult = {
   components: LoadComponentsReturnType
@@ -424,7 +425,7 @@ export default abstract class Server<ServerOptions extends Options = Options> {
     parsedUrl?: NextUrlWithParsedQuery
   ): Promise<void> {
     return getTracer().trace(
-      'BaseServer.handleRequest',
+      BaseServerSpan.handleRequest,
       async (handleRequestSpan) => {
         try {
           const urlParts = (req.url || '').split('?')
@@ -724,7 +725,7 @@ export default abstract class Server<ServerOptions extends Options = Options> {
 
   public getRequestHandler(): BaseRequestHandler {
     const handler = this.handleRequest.bind(this)
-    return getTracer().wrap('BaseServer.getRequestHandler', handler)
+    return getTracer().wrap(BaseServerSpan.getRequestHandler, handler)
   }
 
   protected async handleUpgrade(
@@ -793,7 +794,7 @@ export default abstract class Server<ServerOptions extends Options = Options> {
     res: BaseNextResponse,
     parsedUrl: UrlWithParsedQuery
   ): Promise<void> {
-    return getTracer().trace('BaseServer.run', async () => {
+    return getTracer().trace(BaseServerSpan.run, async () => {
       this.handleCompression(req, res)
 
       try {
@@ -822,7 +823,7 @@ export default abstract class Server<ServerOptions extends Options = Options> {
       query: NextParsedUrlQuery
     }
   ): Promise<void> {
-    return getTracer().trace('BaseServer.pipe', async () => {
+    return getTracer().trace(BaseServerSpan.pipe, async () => {
       const isBotRequest = isBot(partialContext.req.headers['user-agent'] || '')
       const ctx = {
         ...partialContext,
@@ -863,7 +864,7 @@ export default abstract class Server<ServerOptions extends Options = Options> {
       query: ParsedUrlQuery
     }
   ): Promise<string | null> {
-    return getTracer().trace('BaseServer.getStaticHTML', async () => {
+    return getTracer().trace(BaseServerSpan.getStaticHTML, async () => {
       const payload = await fn({
         ...partialContext,
         renderOpts: {
@@ -886,7 +887,7 @@ export default abstract class Server<ServerOptions extends Options = Options> {
     parsedUrl?: NextUrlWithParsedQuery,
     internalRender = false
   ): Promise<void> {
-    return getTracer().trace('BaseServer.render', async () => {
+    return getTracer().trace(BaseServerSpan.render, async () => {
       if (!pathname.startsWith('/')) {
         console.warn(
           `Cannot render page with path "${pathname}", did you mean "/${pathname}"?. See more info here: https://nextjs.org/docs/messages/render-no-starting-slash`
@@ -963,7 +964,7 @@ export default abstract class Server<ServerOptions extends Options = Options> {
     { components, query }: FindComponentsResult
   ): Promise<ResponsePayload | null> {
     return getTracer().trace(
-      'BaseServer.renderToResponseWithComponents',
+      BaseServerSpan.renderToResponseWithComponents,
       async () => {
         const is404Page = pathname === '/404'
         const is500Page = pathname === '/500'
@@ -1594,7 +1595,7 @@ export default abstract class Server<ServerOptions extends Options = Options> {
   private async renderToResponse(
     ctx: RequestContext
   ): Promise<ResponsePayload | null> {
-    return getTracer().trace('BaseServer.renderToResponse', async () => {
+    return getTracer().trace(BaseServerSpan.renderToResponse, async () => {
       const { res, query, pathname } = ctx
       let page = pathname
       const bubbleNoFallback = !!query._nextBubbleNoFallback
@@ -1706,7 +1707,7 @@ export default abstract class Server<ServerOptions extends Options = Options> {
     pathname: string,
     query: ParsedUrlQuery = {}
   ): Promise<string | null> {
-    return getTracer().trace('BaseServer.renderToHTML', () =>
+    return getTracer().trace(BaseServerSpan.renderToHTML, () =>
       this.getStaticHTML((ctx) => this.renderToResponse(ctx), {
         req,
         res,
@@ -1724,7 +1725,7 @@ export default abstract class Server<ServerOptions extends Options = Options> {
     query: NextParsedUrlQuery = {},
     setHeaders = true
   ): Promise<void> {
-    return getTracer().trace('BaseServer.renderError', () => {
+    return getTracer().trace(BaseServerSpan.renderError, () => {
       if (setHeaders) {
         res.setHeader(
           'Cache-Control',
@@ -1755,7 +1756,7 @@ export default abstract class Server<ServerOptions extends Options = Options> {
     ctx: RequestContext,
     err: Error | null
   ): Promise<ResponsePayload | null> {
-    return getTracer().trace('BaseServer.renderErrorToResponse', async () => {
+    return getTracer().trace(BaseServerSpan.renderErrorToResponse, async () => {
       const { res, query } = ctx
       try {
         let result: null | FindComponentsResult = null
@@ -1854,7 +1855,7 @@ export default abstract class Server<ServerOptions extends Options = Options> {
     pathname: string,
     query: ParsedUrlQuery = {}
   ): Promise<string | null> {
-    return getTracer().trace('BaseServer.renderErrorToHTML', () =>
+    return getTracer().trace(BaseServerSpan.renderErrorToHTML, () =>
       this.getStaticHTML((ctx) => this.renderErrorToResponse(ctx, err), {
         req,
         res,
@@ -1875,7 +1876,7 @@ export default abstract class Server<ServerOptions extends Options = Options> {
     parsedUrl?: NextUrlWithParsedQuery,
     setHeaders = true
   ): Promise<void> {
-    return getTracer().trace('BaseServer.render404', () => {
+    return getTracer().trace(BaseServerSpan.render404, () => {
       const { pathname, query }: NextUrlWithParsedQuery = parsedUrl
         ? parsedUrl
         : parseUrl(req.url!, true)

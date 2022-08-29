@@ -99,9 +99,10 @@ import { IncrementalCache } from './lib/incremental-cache'
 import { interpolateDynamicPath } from '../build/webpack/loaders/next-serverless-loader/utils'
 import { getNamedRouteRegex } from '../shared/lib/router/utils/route-regex'
 import { getTracer, SpanStatusCode } from './lib/trace/tracer'
+import { NextNodeServerSpan } from './lib/trace/constants'
 
 if (shouldUseReactRoot) {
-  ; (process.env as any).__NEXT_REACT_ROOT = 'true'
+  ;(process.env as any).__NEXT_REACT_ROOT = 'true'
 }
 
 loadRequireHook()
@@ -184,10 +185,10 @@ export default class NextNodeServer extends BaseServer {
       // pre-warm _document and _app as these will be
       // needed for most requests
       loadComponents(this.distDir, '/_document', this._isLikeServerless).catch(
-        () => { }
+        () => {}
       )
       loadComponents(this.distDir, '/_app', this._isLikeServerless).catch(
-        () => { }
+        () => {}
       )
     }
   }
@@ -195,9 +196,9 @@ export default class NextNodeServer extends BaseServer {
   private compression =
     this.nextConfig.compress && this.nextConfig.target === 'server'
       ? (getTracer().wrap(
-        'NextNodeServer.compression',
-        compression()
-      ) as ExpressMiddleware)
+          NextNodeServerSpan.compression,
+          compression()
+        ) as ExpressMiddleware)
       : undefined
 
   protected loadEnvConfig({
@@ -261,13 +262,13 @@ export default class NextNodeServer extends BaseServer {
     let found = false
     try {
       found = !!this.getPagePath(pathname, this.nextConfig.i18n?.locales)
-    } catch (_) { }
+    } catch (_) {}
 
     return found
   }
 
   protected getBuildId(): string {
-    return getTracer().trace('NextNodeServer.getBuildId', () => {
+    return getTracer().trace(NextNodeServerSpan.getBuildId, () => {
       const buildIdFile = join(this.distDir, BUILD_ID_FILE)
       try {
         return fs.readFileSync(buildIdFile, 'utf8').trim()
@@ -309,7 +310,7 @@ export default class NextNodeServer extends BaseServer {
         type: 'route',
         name: '_next/image catchall',
         fn: getTracer().trace(
-          'NextNodeServer.generateImageRoutes.route',
+          NextNodeServerSpan.generateImageRoutes,
           { attributes: { routeName: '_next/imageCatchall', type: 'route' } },
           () =>
             async (
@@ -395,8 +396,8 @@ export default class NextNodeServer extends BaseServer {
                   cacheEntry.isMiss
                     ? 'MISS'
                     : cacheEntry.isStale
-                      ? 'STALE'
-                      : 'HIT',
+                    ? 'STALE'
+                    : 'HIT',
                   imagesConfig.contentSecurityPolicy,
                   cacheEntry.revalidate || 0,
                   Boolean(this.renderOpts.dev)
@@ -429,7 +430,7 @@ export default class NextNodeServer extends BaseServer {
             match: getPathMatch('/static/:path*'),
             name: 'static catchall',
             fn: getTracer().trace(
-              'NextNodeServer.generateStaticRoutes',
+              NextNodeServerSpan.generateStaticRoutes,
               { attributes: { routeName: 'staticCatchall' } },
               () =>
                 async (
@@ -461,7 +462,7 @@ export default class NextNodeServer extends BaseServer {
         type: 'route',
         name: '_next/static catchall',
         fn: getTracer().trace(
-          'NextNodeServer.generateFsStaticRoutes',
+          NextNodeServerSpan.generateFsStaticRoutes,
           { attributes: { routeName: '_next_staticCatchall', type: 'route' } },
           () =>
             async (
@@ -506,7 +507,7 @@ export default class NextNodeServer extends BaseServer {
   }
 
   protected generatePublicRoutes(): Route[] {
-    return getTracer().trace('NextNodeServer.generatePublicRoutes', () => {
+    return getTracer().trace(NextNodeServerSpan.generatePublicRoutes, () => {
       if (!fs.existsSync(this.publicDir)) return []
 
       const publicFiles = new Set(
@@ -521,7 +522,7 @@ export default class NextNodeServer extends BaseServer {
           matchesBasePath: true,
           name: 'public folder catchall',
           fn: getTracer().trace(
-            'route',
+            NextNodeServerSpan.route,
             {
               attributes: { routeName: 'publicFolderCatchall' },
             },
@@ -608,8 +609,8 @@ export default class NextNodeServer extends BaseServer {
     nextFilesStatic =
       !this.minimalMode && fs.existsSync(join(this.distDir, 'static'))
         ? recursiveReadDirSync(join(this.distDir, 'static')).map((f) =>
-          join('.', relative(this.dir, this.distDir), 'static', f)
-        )
+            join('.', relative(this.dir, this.distDir), 'static', f)
+          )
         : []
 
     return (this._validFilesystemPathSet = new Set<string>([
@@ -630,7 +631,7 @@ export default class NextNodeServer extends BaseServer {
       options?: PayloadOptions | undefined
     }
   ): Promise<void> {
-    return getTracer().trace('NextNodeServer.sendRenderResult', () =>
+    return getTracer().trace(NextNodeServerSpan.sendRenderResult, () =>
       sendRenderResult({
         req: req.originalRequest,
         res: res.originalResponse,
@@ -644,7 +645,7 @@ export default class NextNodeServer extends BaseServer {
     res: NodeNextResponse,
     path: string
   ): Promise<void> {
-    return getTracer().trace('NextNodeServer.sendStatic', () =>
+    return getTracer().trace(NextNodeServerSpan.sendStatic, () =>
       serveStatic(req.originalRequest, res.originalResponse, path)
     )
   }
@@ -654,7 +655,7 @@ export default class NextNodeServer extends BaseServer {
     res: NodeNextResponse
   ): void {
     if (this.compression) {
-      this.compression(req.originalRequest, res.originalResponse, () => { })
+      this.compression(req.originalRequest, res.originalResponse, () => {})
     }
   }
 
@@ -668,7 +669,7 @@ export default class NextNodeServer extends BaseServer {
     parsedUrl: ParsedUrl,
     upgradeHead?: any
   ) {
-    return getTracer().trace('NextNodeServer.proxyRequest', async () => {
+    return getTracer().trace(NextNodeServerSpan.proxyRequest, async () => {
       const { query } = parsedUrl
       delete (parsedUrl as any).query
       parsedUrl.search = stringifyQuery(req, query)
@@ -686,7 +687,7 @@ export default class NextNodeServer extends BaseServer {
       })
 
       await getTracer().trace(
-        'onProxyReq',
+        NextNodeServerSpan.onProxyReq,
         async () =>
           await new Promise((proxyResolve, proxyReject) => {
             let finished = false
@@ -739,7 +740,7 @@ export default class NextNodeServer extends BaseServer {
     page: string,
     builtPagePath: string
   ): Promise<boolean> {
-    return getTracer().trace('NextNodeServer.runApi', async () => {
+    return getTracer().trace(NextNodeServerSpan.runApi, async () => {
       const edgeFunctions = this.getEdgeFunctions()
 
       for (const item of edgeFunctions) {
@@ -773,7 +774,7 @@ export default class NextNodeServer extends BaseServer {
       }
 
       await getTracer().trace(
-        'apiResolver',
+        NextNodeServerSpan.apiResolver,
         async () =>
           await apiResolver(
             (req as NodeNextRequest).originalRequest,
@@ -807,7 +808,7 @@ export default class NextNodeServer extends BaseServer {
     query: NextParsedUrlQuery,
     renderOpts: RenderOpts
   ): Promise<RenderResult | null> {
-    return getTracer().trace('NextNodeServer.renderHTML', () => {
+    return getTracer().trace(NextNodeServerSpan.renderHTML, () => {
       // Due to the way we pass data by mutating `renderOpts`, we can't extend the
       // object here but only updating its `serverComponentManifest` field.
       // https://github.com/vercel/next.js/blob/df7cbd904c3bd85f399d1ce90680c0ecf92d2752/packages/next/server/render.tsx#L947-L952
@@ -845,7 +846,7 @@ export default class NextNodeServer extends BaseServer {
     // When both compression and streaming are enabled, we need to explicitly
     // flush the response to avoid it being buffered by gzip.
     if (this.compression && 'flush' in res.originalResponse) {
-      ; (res.originalResponse as any).flush()
+      ;(res.originalResponse as any).flush()
     }
   }
 
@@ -854,7 +855,7 @@ export default class NextNodeServer extends BaseServer {
     res: NodeNextResponse,
     paramsResult: import('./image-optimizer').ImageParamsResult
   ): Promise<{ buffer: Buffer; contentType: string; maxAge: number }> {
-    return getTracer().trace('NextNodeServer.imageOptimizer', () => {
+    return getTracer().trace(NextNodeServerSpan.imageOptimizer, () => {
       const { imageOptimizer } =
         require('./image-optimizer') as typeof import('./image-optimizer')
 
@@ -875,7 +876,7 @@ export default class NextNodeServer extends BaseServer {
   }
 
   protected getPagePath(pathname: string, locales?: string[]): string {
-    return getTracer().trace('NextNodeServer.getPagePath', () =>
+    return getTracer().trace(NextNodeServerSpan.getPagePath, () =>
       getPagePath(
         pathname,
         this.distDir,
@@ -923,7 +924,7 @@ export default class NextNodeServer extends BaseServer {
     isAppDir: boolean = false
   ): Promise<FindComponentsResult | null> {
     return getTracer().trace(
-      'NextNodeServer.findPageComponents',
+      NextNodeServerSpan.findPageComponents,
       async (findPageComponentsSpan) => {
         let paths = [
           // try serving a static AMP version first
@@ -965,12 +966,12 @@ export default class NextNodeServer extends BaseServer {
               query: {
                 ...(components.getStaticProps
                   ? ({
-                    amp: query.amp,
-                    __nextDataReq: query.__nextDataReq,
-                    __nextLocale: query.__nextLocale,
-                    __nextDefaultLocale: query.__nextDefaultLocale,
-                    __flight__: query.__flight__,
-                  } as NextParsedUrlQuery)
+                      amp: query.amp,
+                      __nextDataReq: query.__nextDataReq,
+                      __nextLocale: query.__nextLocale,
+                      __nextDefaultLocale: query.__nextDefaultLocale,
+                      __flight__: query.__flight__,
+                    } as NextParsedUrlQuery)
                   : query),
                 // For appDir params is excluded.
                 ...((isAppDir ? {} : params) || {}),
@@ -995,15 +996,16 @@ export default class NextNodeServer extends BaseServer {
   }
 
   protected getFontManifest(): FontManifest {
-    return getTracer().trace('NextNodeServer.getFontManifest', () =>
+    return getTracer().trace(NextNodeServerSpan.getFontManifest, () =>
       requireFontManifest(this.distDir, this._isLikeServerless)
     )
   }
 
   protected getServerComponentManifest() {
     if (!this.nextConfig.experimental.serverComponents) return undefined
-    return getTracer().trace('NextNodeServer.getServerComponentManifest', () =>
-      require(join(this.distDir, 'server', FLIGHT_MANIFEST + '.json'))
+    return getTracer().trace(
+      NextNodeServerSpan.getServerComponentManifest,
+      () => require(join(this.distDir, 'server', FLIGHT_MANIFEST + '.json'))
     )
   }
 
@@ -1151,14 +1153,14 @@ export default class NextNodeServer extends BaseServer {
     const headers = this.minimalMode
       ? []
       : this.customRoutes.headers.map((rule) =>
-        createHeaderRoute({ rule, restrictedRedirectPaths })
-      )
+          createHeaderRoute({ rule, restrictedRedirectPaths })
+        )
 
     const redirects = this.minimalMode
       ? []
       : this.customRoutes.redirects.map((rule) =>
-        createRedirectRoute({ rule, restrictedRedirectPaths })
-      )
+          createRedirectRoute({ rule, restrictedRedirectPaths })
+        )
 
     const rewrites = this.generateRewrites({ restrictedRedirectPaths })
     const catchAllMiddleware = this.generateCatchAllMiddlewareRoute()
@@ -1238,7 +1240,7 @@ export default class NextNodeServer extends BaseServer {
   }
 
   // Used to build API page in development
-  protected async ensureApiPage(_pathname: string): Promise<void> { }
+  protected async ensureApiPage(_pathname: string): Promise<void> {}
 
   /**
    * Resolves `API` request, in development builds on demand
@@ -1310,7 +1312,7 @@ export default class NextNodeServer extends BaseServer {
   }
 
   public getRequestHandler(): NodeRequestHandler {
-    return getTracer().trace('NextNodeServer.getRequestHandler', () => {
+    return getTracer().trace(NextNodeServerSpan.getRequestHandler, () => {
       const handler = super.getRequestHandler()
       return (async (req, res, parsedUrl) => {
         return handler(
@@ -1330,7 +1332,7 @@ export default class NextNodeServer extends BaseServer {
     parsedUrl?: NextUrlWithParsedQuery,
     internal = false
   ): Promise<void> {
-    return getTracer().trace('NextNodeServer.render', () =>
+    return getTracer().trace(NextNodeServerSpan.render, () =>
       super.render(
         this.normalizeReq(req),
         this.normalizeRes(res),
@@ -1348,7 +1350,7 @@ export default class NextNodeServer extends BaseServer {
     pathname: string,
     query?: ParsedUrlQuery
   ): Promise<string | null> {
-    return getTracer().trace('NextNodeServer.renderToHTML', () =>
+    return getTracer().trace(NextNodeServerSpan.renderToHTML, () =>
       super.renderToHTML(
         this.normalizeReq(req),
         this.normalizeRes(res),
@@ -1366,7 +1368,7 @@ export default class NextNodeServer extends BaseServer {
     query?: NextParsedUrlQuery,
     setHeaders?: boolean
   ): Promise<void> {
-    return getTracer().trace('NextNodeServer.renderError', () =>
+    return getTracer().trace(NextNodeServerSpan.renderError, () =>
       super.renderError(
         err,
         this.normalizeReq(req),
@@ -1385,7 +1387,7 @@ export default class NextNodeServer extends BaseServer {
     pathname: string,
     query?: ParsedUrlQuery
   ): Promise<string | null> {
-    return getTracer().trace('NextNodeServer.renderErrorToHTML', () =>
+    return getTracer().trace(NextNodeServerSpan.renderErrorToHTML, () =>
       super.renderErrorToHTML(
         err,
         this.normalizeReq(req),
@@ -1402,7 +1404,7 @@ export default class NextNodeServer extends BaseServer {
     parsedUrl?: NextUrlWithParsedQuery,
     setHeaders?: boolean
   ): Promise<void> {
-    return getTracer().trace('NextNodeServer.render404', () =>
+    return getTracer().trace(NextNodeServerSpan.render404, () =>
       super.render404(
         this.normalizeReq(req),
         this.normalizeRes(res),
@@ -1451,22 +1453,22 @@ export default class NextNodeServer extends BaseServer {
   protected getStaticRoutes(): Route[] {
     return this.hasStaticDir
       ? [
-        {
-          // It's very important to keep this route's param optional.
-          // (but it should support as many params as needed, separated by '/')
-          // Otherwise this will lead to a pretty simple DOS attack.
-          // See more: https://github.com/vercel/next.js/issues/2617
-          match: getPathMatch('/static/:path*'),
-          name: 'static catchall',
-          fn: async (req, res, params, parsedUrl) => {
-            const p = join(this.dir, 'static', ...params.path)
-            await this.serveStatic(req, res, p, parsedUrl)
-            return {
-              finished: true,
-            }
-          },
-        } as Route,
-      ]
+          {
+            // It's very important to keep this route's param optional.
+            // (but it should support as many params as needed, separated by '/')
+            // Otherwise this will lead to a pretty simple DOS attack.
+            // See more: https://github.com/vercel/next.js/issues/2617
+            match: getPathMatch('/static/:path*'),
+            name: 'static catchall',
+            fn: async (req, res, params, parsedUrl) => {
+              const p = join(this.dir, 'static', ...params.path)
+              await this.serveStatic(req, res, p, parsedUrl)
+              return {
+                finished: true,
+              }
+            },
+          } as Route,
+        ]
       : []
   }
 
@@ -1689,8 +1691,8 @@ export default class NextNodeServer extends BaseServer {
    * It will make sure that the root middleware or an edge function has been compiled
    * so that we can run it.
    */
-  protected async ensureMiddleware() { }
-  protected async ensureEdgeFunction(_pathname: string) { }
+  protected async ensureMiddleware() {}
+  protected async ensureEdgeFunction(_pathname: string) {}
 
   /**
    * This method gets all middleware matchers and execute them when the request
@@ -1718,9 +1720,11 @@ export default class NextNodeServer extends BaseServer {
     const query = urlQueryToSearchParams(params.parsed.query).toString()
     const locale = params.parsed.query.__nextLocale
 
-    const url = `${getRequestMeta(params.request, '_protocol')}://${this.hostname
-      }:${this.port}${locale ? `/${locale}` : ''}${params.parsed.pathname}${query ? `?${query}` : ''
-      }`
+    const url = `${getRequestMeta(params.request, '_protocol')}://${
+      this.hostname
+    }:${this.port}${locale ? `/${locale}` : ''}${params.parsed.pathname}${
+      query ? `?${query}` : ''
+    }`
 
     if (!url.startsWith('http')) {
       throw new Error(
@@ -2007,7 +2011,7 @@ export default class NextNodeServer extends BaseServer {
   }
 
   protected getRoutesManifest() {
-    return getTracer().trace('NextNodeServer.getRoutesManifest', () =>
+    return getTracer().trace(NextNodeServerSpan.getRoutesManifest, () =>
       require(join(this.distDir, ROUTES_MANIFEST))
     )
   }
@@ -2130,7 +2134,7 @@ export default class NextNodeServer extends BaseServer {
         (params.res as NodeNextResponse).originalResponse
       )
     } else {
-      ; (params.res as NodeNextResponse).originalResponse.end()
+      ;(params.res as NodeNextResponse).originalResponse.end()
     }
 
     return result
