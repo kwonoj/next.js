@@ -405,6 +405,9 @@ const configSchema = {
         workerThreads: {
           type: 'boolean',
         },
+        trace: {
+          type: 'object',
+        },
       },
       type: 'object',
     },
