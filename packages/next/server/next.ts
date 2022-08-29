@@ -59,8 +59,10 @@ export class NextServer {
       res: ServerResponse,
       parsedUrl?: UrlWithParsedQuery
     ) => {
-      const requestHandler = await this.getServerRequestHandler()
-      return requestHandler(req, res, parsedUrl)
+      return getTracer().trace('NextServer.getRequestHandler', async () => {
+        const requestHandler = await this.getServerRequestHandler()
+        return requestHandler(req, res, parsedUrl)
+      })
     }
   }
 
@@ -154,7 +156,7 @@ export class NextServer {
         initializeTraceOnce(conf?.experimental?.trace)
 
         // This'll be the root span for the next/server trace
-        return getTracer().trace('NextServer.createServer', async () => {
+        return getTracer().trace('NextServer.getServer', async () => {
           this.server = await this.createServer({
             ...this.options,
             conf,
@@ -174,7 +176,7 @@ export class NextServer {
     if (!this.reqHandlerPromise) {
       this.reqHandlerPromise = this.getServer().then((server) =>
         getTracer().wrap(
-          'getServerRequestHandler',
+          'NextServer.getServerRequestHandler',
           server.getRequestHandler().bind(server)
         )
       )
@@ -184,7 +186,7 @@ export class NextServer {
 }
 
 // This file is used for when users run `require('next')`
-function createServer(options: NextServerOptions): NextServer {
+function createServerImpl(options: NextServerOptions): NextServer {
   if (options == null) {
     throw new Error(
       'The server has not been instantiated properly. https://nextjs.org/docs/messages/invalid-server-options'
@@ -211,6 +213,11 @@ function createServer(options: NextServerOptions): NextServer {
 
   return new NextServer(options)
 }
+
+const createServer = getTracer().wrap(
+  'createServer.createServer',
+  createServerImpl
+)
 
 // Support commonjs `require('next')`
 module.exports = createServer

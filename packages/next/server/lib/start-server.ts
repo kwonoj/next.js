@@ -2,13 +2,14 @@ import type { NextServerOptions, NextServer, RequestHandler } from '../next'
 import { warn } from '../../build/output/log'
 import http from 'http'
 import next from '../next'
+import { getTracer } from './trace/tracer'
 
 interface StartServerOptions extends NextServerOptions {
   allowRetry?: boolean
   keepAliveTimeout?: number
 }
 
-export function startServer(opts: StartServerOptions) {
+function startServerImpl(opts: StartServerOptions) {
   let requestHandler: RequestHandler
 
   const server = http.createServer((req, res) => {
@@ -70,3 +71,8 @@ export function startServer(opts: StartServerOptions) {
     server.listen(port, opts.hostname)
   })
 }
+
+export const startServer = getTracer().wrap(
+  'startServer.startServer',
+  startServerImpl
+)

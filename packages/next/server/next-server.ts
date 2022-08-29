@@ -310,7 +310,7 @@ export default class NextNodeServer extends BaseServer {
         name: '_next/image catchall',
         fn: getTracer().trace(
           'NextNodeServer.generateImageRoutes.route',
-          { attributes: { name: '_next/imageCatchall', type: 'route' } },
+          { attributes: { routeName: '_next/imageCatchall', type: 'route' } },
           () =>
             async (
               req: BaseNextRequest,
@@ -421,32 +421,32 @@ export default class NextNodeServer extends BaseServer {
   protected generateStaticRoutes(): Route[] {
     return this.hasStaticDir
       ? [
-        {
-          // It's very important to keep this route's param optional.
-          // (but it should support as many params as needed, separated by '/')
-          // Otherwise this will lead to a pretty simple DOS attack.
-          // See more: https://github.com/vercel/next.js/issues/2617
-          match: getPathMatch('/static/:path*'),
-          name: 'static catchall',
-          fn: getTracer().trace(
-            'NextNodeServer.generateStaticRoutes',
-            { attributes: { name: 'staticCatchall' } },
-            () =>
-              async (
-                req: BaseNextRequest,
-                res: BaseNextResponse,
-                params: Params,
-                parsedUrl: NextUrlWithParsedQuery
-              ) => {
-                const p = join(this.dir, 'static', ...params.path)
-                await this.serveStatic(req, res, p, parsedUrl)
-                return {
-                  finished: true,
+          {
+            // It's very important to keep this route's param optional.
+            // (but it should support as many params as needed, separated by '/')
+            // Otherwise this will lead to a pretty simple DOS attack.
+            // See more: https://github.com/vercel/next.js/issues/2617
+            match: getPathMatch('/static/:path*'),
+            name: 'static catchall',
+            fn: getTracer().trace(
+              'NextNodeServer.generateStaticRoutes',
+              { attributes: { routeName: 'staticCatchall' } },
+              () =>
+                async (
+                  req: BaseNextRequest,
+                  res: BaseNextResponse,
+                  params: Params,
+                  parsedUrl: NextUrlWithParsedQuery
+                ) => {
+                  const p = join(this.dir, 'static', ...params.path)
+                  await this.serveStatic(req, res, p, parsedUrl)
+                  return {
+                    finished: true,
+                  }
                 }
-              }
-          ),
-        } as Route,
-      ]
+            ),
+          } as Route,
+        ]
       : []
   }
 
@@ -462,7 +462,7 @@ export default class NextNodeServer extends BaseServer {
         name: '_next/static catchall',
         fn: getTracer().trace(
           'NextNodeServer.generateFsStaticRoutes',
-          { attributes: { name: '_next_staticCatchall', type: 'route' } },
+          { attributes: { routeName: '_next_staticCatchall', type: 'route' } },
           () =>
             async (
               req: BaseNextRequest,
@@ -523,7 +523,7 @@ export default class NextNodeServer extends BaseServer {
           fn: getTracer().trace(
             'route',
             {
-              attributes: { name: 'publicFolderCatchall' },
+              attributes: { routeName: 'publicFolderCatchall' },
             },
             () =>
               async (
@@ -977,14 +977,14 @@ export default class NextNodeServer extends BaseServer {
               },
             }
           } catch (err) {
-            findPageComponentsSpan.setStatus({
-              code: SpanStatusCode.ERROR,
-              message: (err as Error)?.message,
-            })
-
             // we should only not throw if we failed to find the page
             // in the pages-manifest
             if (!(err instanceof PageNotFoundError)) {
+              findPageComponentsSpan.setStatus({
+                code: SpanStatusCode.ERROR,
+                message: (err as Error)?.message,
+              })
+
               throw err
             }
           }
