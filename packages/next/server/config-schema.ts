@@ -390,6 +390,9 @@ const configSchema = {
         fontLoaders: {
           type: 'object',
         },
+        trace: {
+          type: 'object',
+        },
       },
       type: 'object',
     },
