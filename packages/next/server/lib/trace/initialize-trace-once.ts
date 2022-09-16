@@ -4,6 +4,9 @@ import { configureTracer } from './tracer'
 import type { OTLPExporterNodeConfigBase } from '@opentelemetry/otlp-exporter-base'
 
 const {
+  trace,
+}: typeof import('@opentelemetry/api') = require('next/dist/compiled/@opentelemetry/api')
+const {
   OTLPTraceExporter,
 }: typeof import('@opentelemetry/exporter-trace-otlp-grpc') = require('next/dist/compiled/@opentelemetry/exporter-trace-otlp-grpc')
 
@@ -106,6 +109,8 @@ export const initializeTraceOnce = (() => {
     )
 
     provider.register()
+    // Register provider as global, allows app can acquire it from global registry to insert spans connected with current provider.
+    trace.setGlobalTracerProvider(provider)
     configureTracer({ provider, ...config })
 
     Array.from(['SIGTERM', 'SIGINT'] as const).forEach((sig) => {
