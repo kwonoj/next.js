@@ -6,10 +6,10 @@
     "start": "next start"
   },
   "dependencies": {
-    "@opentelemetry/api": "1.1.0",
-    "next": "latest",
-    "react": "18.2.0",
-    "react-dom": "18.2.0",
+    "@opentelemetry/api": "1.2.0",
+    "next": "link:../../next.js/packages/next",
+    "react": "link:/../../next.js/node_modules/react",
+    "react-dom": "link:/../../next.js/node_modules/react-dom",
     "swr": "^1.3.0"
   },
   "devDependencies": {
