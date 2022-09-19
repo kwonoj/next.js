@@ -445,6 +445,11 @@ export default abstract class Server<ServerOptions extends Options = Options> {
     return getTracer().trace(
       BaseServerSpan.handleRequest,
       async (handleRequestSpan) => {
+        let requestHeader = req.headers['x-vercel-id']
+        if (requestHeader) {
+          handleRequestSpan.setAttribute('x-vercel-id', requestHeader)
+        }
+
         try {
           const urlParts = (req.url || '').split('?')
           const urlNoQuery = urlParts[0]
