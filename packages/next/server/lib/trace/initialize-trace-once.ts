@@ -4,7 +4,8 @@ import { configureTracer } from './tracer'
 import type { OTLPExporterNodeConfigBase } from '@opentelemetry/otlp-exporter-base'
 
 const {
-  trace,
+  diag,
+  DiagLogLevel,
 }: typeof import('@opentelemetry/api') = require('next/dist/compiled/@opentelemetry/api')
 const {
   OTLPTraceExporter,
@@ -19,7 +20,9 @@ const {
  *
  * TODO: Figure out what kind of options we'll expose to configure.
  */
-const collectorOptions: OTLPExporterNodeConfigBase = {}
+const collectorOptions: OTLPExporterNodeConfigBase = {
+  url: 'http://192.9.232.1:4317',
+}
 
 /**
  * Creates a span processor.
@@ -82,6 +85,19 @@ export const initializeTraceOnce = (() => {
       return
     }
 
+    diag.setLogger(
+      {
+        error: console.error.bind(console),
+        warn: console.error.bind(console),
+        info: console.log.bind(console),
+        debug: console.error.bind(console),
+        verbose: console.error.bind(console),
+      },
+      DiagLogLevel.ERROR
+    )
+
+    //DiagLogLevel.ALL)
+
     provider = new NodeTracerProvider({
       resource: new Resource({
         [SemanticResourceAttributes.SERVICE_NAME]: config.serviceName,
@@ -93,6 +109,7 @@ export const initializeTraceOnce = (() => {
         [SemanticResourceAttributes.SERVICE_VERSION]: undefined,
       }),
     })
+    ;(provider as any)._config.forceFlushTimeoutMillis = 1
 
     if (!!config?.debug) {
       warn(`Debug mode is enabled. Spans will be emitted into console.`)
@@ -101,16 +118,22 @@ export const initializeTraceOnce = (() => {
     const exporter = !!config?.debug
       ? new ConsoleSpanExporter()
       : new OTLPTraceExporter(collectorOptions)
-    provider.addSpanProcessor(
-      buildSpanProcessor(
-        config.spanProcessorConfig ?? { processorType: 'simple' },
-        exporter
-      )
+
+    let p = buildSpanProcessor(
+      config.spanProcessorConfig ?? { processorType: 'simple' },
+      exporter
     )
 
+    provider.addSpanProcessor(p)
+    ;(global as any).shutdownooooo = async () => {
+      console.log('asking to shutdown')
+      await provider?.shutdown?.()
+      console.log('asking to done')
+    }
+
+    // This'll internally register provider as global,
+    // allows app can acquire it from global registry to insert spans connected with current provider.
     provider.register()
-    // Register provider as global, allows app can acquire it from global registry to insert spans connected with current provider.
-    trace.setGlobalTracerProvider(provider)
     configureTracer({ provider, ...config })
 
     Array.from(['SIGTERM', 'SIGINT'] as const).forEach((sig) => {
