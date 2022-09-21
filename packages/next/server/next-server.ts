@@ -105,6 +105,7 @@ import { getNamedRouteRegex } from '../shared/lib/router/utils/route-regex'
 import { normalizeAppPath } from '../shared/lib/router/utils/app-paths'
 import { getTracer, SpanStatusCode } from './lib/trace/tracer'
 import { NextNodeServerSpan } from './lib/trace/constants'
+import { initializeTraceOnce } from './lib/trace/initialize-trace-once'
 
 if (shouldUseReactRoot) {
   ;(process.env as any).__NEXT_REACT_ROOT = 'true'
@@ -220,6 +221,14 @@ export default class NextNodeServer extends BaseServer {
   constructor(options: Options) {
     // Initialize super class
     super(options)
+
+    // Initialize trace with next.js configuration. Deployed codes does not uses `next.ts/NextServer`
+    // instead directly import this module to construct server, so this'll be the
+    // entrypoint to the trace collection, any attempt to write trace
+    // prior to this will be silently ignored.
+    // next/server still will try to init trace with same config. Any attempt to init trace
+    // arrives first, will activate traces.
+    initializeTraceOnce(options.conf?.experimental?.trace)
 
     /**
      * This sets environment variable to be used at the time of SSR by head.tsx.
