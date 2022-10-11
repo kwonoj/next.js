@@ -247,6 +247,9 @@ impl Namespacer {
                             PseudoElementSelectorChildren::CompoundSelector(v) => {
                                 to_tokens(v).tokens
                             }
+                            PseudoElementSelectorChildren::CustomHighlightName(v) => {
+                                to_tokens(v).tokens
+                            }
                         })
                         .collect::<Vec<_>>();
 
