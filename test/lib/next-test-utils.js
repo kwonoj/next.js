@@ -150,6 +150,12 @@ export function fetchViaHTTP(appPort, pathname, query, opts) {
       }
     },
     ...opts,
+    headers: {
+      ...(opts?.headers ?? {}),
+      // --turbo devserver explicitly requires accept header
+      'Accept':
+        'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;',
+    },
   })
 }
 
