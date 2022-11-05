@@ -15,7 +15,7 @@ import {
   resolveExternal,
 } from '../../webpack-config'
 import { NextConfigComplete } from '../../../server/config-shared'
-import { loadBindings } from '../../swc'
+import { loadBindings } from '../../rs'
 
 const PLUGIN_NAME = 'TraceEntryPointsPlugin'
 const TRACE_IGNORES = [
