@@ -2286,7 +2286,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "next-swc"
+name = "next-rs"
 version = "0.0.0"
 dependencies = [
  "chrono",
@@ -2309,7 +2309,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "next-swc-napi"
+name = "next-rs-napi"
 version = "0.0.0"
 dependencies = [
  "anyhow",
@@ -2321,7 +2321,7 @@ dependencies = [
  "napi-build",
  "napi-derive",
  "next-dev",
- "next-swc",
+ "next-rs",
  "node-file-trace",
  "once_cell",
  "sentry",
@@ -5913,7 +5913,7 @@ dependencies = [
  "getrandom",
  "js-sys",
  "mdxjs",
- "next-swc",
+ "next-rs",
  "once_cell",
  "parking_lot_core 0.8.0",
  "path-clean",
