@@ -32,7 +32,7 @@ async function createNextInstall(
   )) {
     if (folder.startsWith('swc-')) {
       const swcPkgPath = path.join(origRepoDir, 'node_modules/@next', folder)
-      const outputPath = path.join(origRepoDir, 'packages/next-swc/native')
+      const outputPath = path.join(origRepoDir, 'packages/next-rs/native')
       await fs.copy(swcPkgPath, outputPath, {
         filter: (item) => {
           return (
