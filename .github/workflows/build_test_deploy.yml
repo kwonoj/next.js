@@ -28,7 +28,7 @@ jobs:
     env:
       NEXT_TELEMETRY_DISABLED: 1
       # we build a dev binary for use in CI so skip downloading
-      # canary next-swc binaries in the monorepo
+      # canary next-rs binaries in the monorepo
       NEXT_SKIP_NATIVE_POSTINSTALL: 1
     outputs:
       docsChange: ${{ steps.docs-change.outputs.DOCS_CHANGE }}
@@ -124,7 +124,7 @@ jobs:
           path: ./*
           key: ${{ github.sha }}-${{ github.run_number }}
 
-      - run: echo "::set-output name=SWC_CHANGE::$(node scripts/run-for-change.js --type next-swc --exec echo 'yup')"
+      - run: echo "::set-output name=SWC_CHANGE::$(node scripts/run-for-change.js --type next-rs --exec echo 'yup')"
         id: swc-change
 
       - run: echo ${{ steps.swc-change.outputs.SWC_CHANGE }}
@@ -156,7 +156,7 @@ jobs:
         run: |
           cargo fmt -- --check
           cargo clippy --all -- -D warnings
-        working-directory: packages/next-swc
+        working-directory: packages/next-rs
 
   checkPrecompiled:
     name: Check Pre-compiled
@@ -877,7 +877,7 @@ jobs:
 
       - uses: actions/download-artifact@v3
         with:
-          name: next-swc-binaries
+          name: next-rs-binaries
           path: packages/next-rs/native
 
       - uses: actions/download-artifact@v3
@@ -1038,9 +1038,9 @@ jobs:
         uses: actions/cache@v3
         with:
           path: ./packages/next-rs/target
-          key: next-swc-cargo-cache-dev-ubuntu-latest-${{ hashFiles('**/Cargo.lock') }}
+          key: next-rs-cargo-cache-dev-ubuntu-latest-${{ hashFiles('**/Cargo.lock') }}
           restore-keys: |
-            next-swc-cargo-cache-dev-ubuntu-latest
+            next-rs-cargo-cache-dev-ubuntu-latest
 
       # since the repo's dependencies aren't installed we need
       # to install napi globally
@@ -1072,7 +1072,7 @@ jobs:
         with:
           fetch-depth: 25
 
-      - run: echo "::set-output name=SWC_CHANGE::$(node scripts/run-for-change.js --type next-swc --exec echo 'yup')"
+      - run: echo "::set-output name=SWC_CHANGE::$(node scripts/run-for-change.js --type next-rs --exec echo 'yup')"
         id: swc-change
 
       - run: echo ${{ steps.swc-change.outputs.SWC_CHANGE }}
@@ -1084,7 +1084,7 @@ jobs:
           toolchain: ${{ env.RUST_TOOLCHAIN }}
           profile: minimal
 
-      - run: cd packages/next-swc && cargo test
+      - run: cd packages/next-rs && cargo test
         if: ${{ steps.swc-change.outputs.SWC_CHANGE == 'yup' }}
 
   test-wasm:
@@ -1297,9 +1297,9 @@ jobs:
         uses: actions/cache@v3
         with:
           path: ./packages/next-rs/target
-          key: next-swc-cargo-cache-${{ matrix.settings.target }}--${{ hashFiles('**/Cargo.lock') }}
+          key: next-rs-cargo-cache-${{ matrix.settings.target }}--${{ hashFiles('**/Cargo.lock') }}
           restore-keys: |
-            next-swc-cargo-cache-${{ matrix.settings.target }}
+            next-rs-cargo-cache-${{ matrix.settings.target }}
       - name: Turbo Cache
         id: turbo-cache
         uses: actions/cache@v3
@@ -1360,7 +1360,7 @@ jobs:
       - name: Upload artifact
         uses: actions/upload-artifact@v3
         with:
-          name: next-swc-binaries
+          name: next-rs-binaries
           path: packages/next-rs/native/next-rs.*.node
 
   build-native-freebsd:
@@ -1418,7 +1418,7 @@ jobs:
       - name: Upload artifact
         uses: actions/upload-artifact@v3
         with:
-          name: next-swc-binaries
+          name: next-rs-binaries
           path: packages/next-rs/native/next-rs.*.node
           if-no-files-found: error
 

@@ -78,9 +78,9 @@ jobs:
         uses: actions/cache@v3
         with:
           path: ./packages/next-target
-          key: next-swc-cargo-cache-ubuntu-latest--${{ hashFiles('**/Cargo.lock') }}
+          key: next-rs-cargo-cache-ubuntu-latest--${{ hashFiles('**/Cargo.lock') }}
           restore-keys: |
-            next-swc-cargo-cache-ubuntu-latest
+            next-rs-cargo-cache-ubuntu-latest
 
       # since the repo's dependencies aren't installed we need
       # to install napi globally

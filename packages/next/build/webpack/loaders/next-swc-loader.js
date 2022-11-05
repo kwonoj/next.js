@@ -101,7 +101,7 @@ async function loaderTransform(parentTrace, source, inputSourceMap) {
       this.mode === 'development'
   }
 
-  const swcSpan = parentTrace.traceChild('next-swc-transform')
+  const swcSpan = parentTrace.traceChild('next-rs-transform')
   return swcSpan.traceAsyncFn(() =>
     transform(source, programmaticOptions).then((output) => {
       if (output.eliminatedPackages && this.eliminatedPackages) {
