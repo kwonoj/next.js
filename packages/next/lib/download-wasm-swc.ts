@@ -14,7 +14,7 @@ export async function downloadWasmSwc(
   wasmDirectory: string,
   variant: 'nodejs' | 'web' = 'nodejs'
 ) {
-  const pkgName = `@next/swc-wasm-${variant}`
+  const pkgName = `@next/rs-wasm-${variant}`
   const tarFileName = `${pkgName.substring(6)}-${version}.tgz`
   const outputDirectory = path.join(wasmDirectory, pkgName)
 
@@ -62,7 +62,7 @@ export async function downloadWasmSwc(
           process.exit(0)
         }
       }
-      result = path.join(systemCacheDirectory, 'next-swc')
+      result = path.join(systemCacheDirectory, 'next-rs')
     }
 
     if (!path.isAbsolute(result)) {

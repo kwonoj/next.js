@@ -53,7 +53,7 @@ module.exports = (actionInfo) => {
         }
       }
     },
-    async linkPackages(repoDir = '', nextSwcPkg) {
+    async linkPackages(repoDir = '', nextRsPkg) {
       const pkgPaths = new Map()
       const pkgDatas = new Map()
       let pkgs
@@ -98,23 +98,23 @@ module.exports = (actionInfo) => {
           pkgData.dependencies[pkg] = packedPkgPath
         }
         // make sure native binaries are included in local linking
-        if (pkg === '@next/swc') {
+        if (pkg === '@next/rs') {
           if (!pkgData.files) {
             pkgData.files = []
           }
           pkgData.files.push('native')
           console.log(
-            'using swc binaries: ',
+            'using next/rs binaries: ',
             await exec(`ls ${path.join(path.dirname(pkgDataPath), 'native')}`)
           )
         }
         if (pkg === 'next') {
-          if (nextSwcPkg) {
-            Object.assign(pkgData.dependencies, nextSwcPkg)
+          if (nextRsPkg) {
+            Object.assign(pkgData.dependencies, nextRsPkg)
           } else {
-            if (pkgDatas.get('@next/swc')) {
-              pkgData.dependencies['@next/swc'] =
-                pkgDatas.get('@next/swc').packedPkgPath
+            if (pkgDatas.get('@next/rs')) {
+              pkgData.dependencies['@next/rs'] =
+                pkgDatas.get('@next/rs').packedPkgPath
             } else {
               pkgData.files.push('native')
             }

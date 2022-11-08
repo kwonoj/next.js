@@ -15,16 +15,16 @@ const cwd = process.cwd()
     let gitref = process.argv.slice(2)[0]
 
     // Copy binaries to package folders, update version, and publish
-    let nativePackagesDir = path.join(cwd, 'packages/next-swc/crates/napi/npm')
+    let nativePackagesDir = path.join(cwd, 'packages/next-rs/crates/napi/npm')
     let platforms = (await readdir(nativePackagesDir)).filter(
       (name) => !name.startsWith('.')
     )
 
     for (let platform of platforms) {
       try {
-        let binaryName = `next-swc.${platform}.node`
+        let binaryName = `next-rs.${platform}.node`
         await copy(
-          path.join(cwd, 'packages/next-swc/native', binaryName),
+          path.join(cwd, 'packages/next-rs/native', binaryName),
           path.join(nativePackagesDir, platform, binaryName)
         )
         let pkg = JSON.parse(
@@ -69,12 +69,12 @@ const cwd = process.cwd()
     }
 
     // Update name/version of wasm packages and publish
-    let wasmDir = path.join(cwd, 'packages/next-swc/crates/wasm')
+    let wasmDir = path.join(cwd, 'packages/next-rs/crates/wasm')
     for (let wasmTarget of ['web', 'nodejs']) {
       let wasmPkg = JSON.parse(
         await readFile(path.join(wasmDir, `pkg-${wasmTarget}/package.json`))
       )
-      wasmPkg.name = `@next/swc-wasm-${wasmTarget}`
+      wasmPkg.name = `@next/rs-wasm-${wasmTarget}`
       wasmPkg.version = version
 
       await writeFile(
@@ -114,7 +114,7 @@ const cwd = process.cwd()
     )
     for (let platform of platforms) {
       let optionalDependencies = nextPkg.optionalDependencies || {}
-      optionalDependencies['@next/swc-' + platform] = version
+      optionalDependencies['@next/rs-' + platform] = version
       nextPkg.optionalDependencies = optionalDependencies
     }
     await writeFile(
