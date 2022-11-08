@@ -32,7 +32,7 @@ jobs:
       NEXT_SKIP_NATIVE_POSTINSTALL: 1
     outputs:
       docsChange: ${{ steps.docs-change.outputs.DOCS_CHANGE }}
-      isRelease: ${{ steps.check-release.outputs.IS_RELEASE }}
+      isRelease: true
       weekNum: ${{ steps.get-week.outputs.WEEK }}
     steps:
       - name: Setup node
