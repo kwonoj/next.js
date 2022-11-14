@@ -1,14 +1,24 @@
 import stripAnsi from 'next/dist/compiled/strip-ansi'
 import { createNext, FileRef } from 'e2e-utils'
 import { NextInstance } from 'test/lib/next-modes/base'
-import { check, renderViaHTTP } from 'next-test-utils'
+import { check, renderViaHTTP, shouldRunTurboDevTest } from 'next-test-utils'
 import { join } from 'path'
 
-describe('api-route-errors cli output', () => {
+const shouldRunTurboDev = shouldRunTurboDevTest()
+
+describe.each([
+  ['dev', false],
+  ['turbo', true],
+])('api-route-errors cli output %s', (_name, turbo) => {
+  if (!!turbo && !shouldRunTurboDev) {
+    return
+  }
+
   let next: NextInstance
 
   beforeAll(async () => {
     next = await createNext({
+      turbo: !!turbo,
       files: {
         pages: new FileRef(join(__dirname, 'app/pages')),
       },

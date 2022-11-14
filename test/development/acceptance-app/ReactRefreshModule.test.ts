@@ -2,8 +2,18 @@ import { createNext, FileRef } from 'e2e-utils'
 import path from 'path'
 import { NextInstance } from 'test/lib/next-modes/base'
 import { sandbox } from './helpers'
+import { shouldRunTurboDevTest } from 'next-test-utils'
 
-describe('ReactRefreshModule app', () => {
+const shouldRunTurboDev = shouldRunTurboDevTest()
+
+describe.each([
+  ['dev', false],
+  ['turbo', true],
+])('ReactRefreshModule app %s', (_name, turbo) => {
+  if (!!turbo && !shouldRunTurboDev) {
+    return
+  }
+
   if (process.env.NEXT_TEST_REACT_VERSION === '^17') {
     it('should skip for react v17', () => {})
     return
@@ -13,6 +23,7 @@ describe('ReactRefreshModule app', () => {
 
   beforeAll(async () => {
     next = await createNext({
+      turbo: !!turbo,
       files: new FileRef(path.join(__dirname, 'fixtures', 'default-template')),
       dependencies: {
         react: 'latest',

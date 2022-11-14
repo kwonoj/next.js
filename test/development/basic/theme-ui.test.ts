@@ -2,12 +2,23 @@ import { join } from 'path'
 import webdriver from 'next-webdriver'
 import { createNext, FileRef } from 'e2e-utils'
 import { NextInstance } from 'test/lib/next-modes/base'
+import { shouldRunTurboDevTest } from 'next-test-utils'
 
-describe('theme-ui SWC option', () => {
+const shouldRunTurboDev = shouldRunTurboDevTest()
+
+describe.each([
+  ['dev', false],
+  ['turbo', true],
+])('theme-ui SWC option %s', (_name, turbo) => {
+  if (!!turbo && !shouldRunTurboDev) {
+    return
+  }
+
   let next: NextInstance
 
   beforeAll(async () => {
     next = await createNext({
+      turbo: !!turbo,
       files: {
         'jsconfig.json': new FileRef(join(__dirname, 'theme-ui/jsconfig.json')),
         pages: new FileRef(join(__dirname, 'theme-ui/pages')),

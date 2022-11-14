@@ -2,13 +2,23 @@
 import { sandbox } from './helpers'
 import { createNext } from 'e2e-utils'
 import { NextInstance } from 'test/lib/next-modes/base'
-import { check } from 'next-test-utils'
+import { check, shouldRunTurboDevTest } from 'next-test-utils'
 
-describe('ReactRefreshLogBox', () => {
+const shouldRunTurboDev = shouldRunTurboDevTest()
+
+describe.each([
+  ['dev', false],
+  ['turbo', true],
+])('ReactRefreshLogBox %s', (_name, turbo) => {
+  if (!!turbo && !shouldRunTurboDev) {
+    return
+  }
+
   let next: NextInstance
 
   beforeAll(async () => {
     next = await createNext({
+      turbo: !!turbo,
       files: {},
       skipStart: true,
     })
@@ -24,7 +34,7 @@ describe('ReactRefreshLogBox', () => {
         export default function Page() {
           return (
             <>
-            
+
                           <p>index page</p>
 
                           <a onClick={() => {
@@ -40,7 +50,11 @@ describe('ReactRefreshLogBox', () => {
     await session.evaluate(() => document.querySelector('a').click())
 
     expect(await session.hasRedbox(true)).toBe(true)
-    expect(await session.getRedboxSource()).toMatchSnapshot()
+    if (!turbo) {
+      expect(await session.getRedboxSource()).toMatchSnapshot()
+    } else {
+      expect(await session.getRedboxSource()).toMatchInlineSnapshot()
+    }
 
     await cleanup()
   })
@@ -74,7 +88,11 @@ describe('ReactRefreshLogBox', () => {
     await session.patch('index.js', `export default () => <div/`)
 
     expect(await session.hasRedbox(true)).toBe(true)
-    expect(await session.getRedboxSource()).toMatchSnapshot()
+    if (!turbo) {
+      expect(await session.getRedboxSource()).toMatchSnapshot()
+    } else {
+      expect(await session.getRedboxSource()).toMatchInlineSnapshot()
+    }
 
     await session.patch(
       'index.js',
@@ -138,9 +156,17 @@ describe('ReactRefreshLogBox', () => {
 
     expect(await session.hasRedbox(true)).toBe(true)
     if (process.platform === 'win32') {
-      expect(await session.getRedboxSource()).toMatchSnapshot()
+      if (!turbo) {
+        expect(await session.getRedboxSource()).toMatchSnapshot()
+      } else {
+        expect(await session.getRedboxSource()).toMatchInlineSnapshot()
+      }
     } else {
-      expect(await session.getRedboxSource()).toMatchSnapshot()
+      if (!turbo) {
+        expect(await session.getRedboxSource()).toMatchSnapshot()
+      } else {
+        expect(await session.getRedboxSource()).toMatchInlineSnapshot()
+      }
     }
 
     await session.patch(
@@ -218,7 +244,11 @@ describe('ReactRefreshLogBox', () => {
     )
 
     expect(await session.hasRedbox(true)).toBe(true)
-    expect(await session.getRedboxSource()).toMatchSnapshot()
+    if (!turbo) {
+      expect(await session.getRedboxSource()).toMatchSnapshot()
+    } else {
+      expect(await session.getRedboxSource()).toMatchInlineSnapshot()
+    }
 
     const didNotReload = await session.patch(
       'child.js',
@@ -313,7 +343,11 @@ describe('ReactRefreshLogBox', () => {
       `
     )
     expect(await session.hasRedbox(true)).toBe(true)
-    expect(await session.getRedboxSource()).toMatchSnapshot()
+    if (!turbo) {
+      expect(await session.getRedboxSource()).toMatchSnapshot()
+    } else {
+      expect(await session.getRedboxSource()).toMatchInlineSnapshot()
+    }
 
     await cleanup()
   })
@@ -359,9 +393,17 @@ describe('ReactRefreshLogBox', () => {
 
     expect(await session.hasRedbox(true)).toBe(true)
     if (process.platform === 'win32') {
-      expect(await session.getRedboxSource()).toMatchSnapshot()
+      if (!turbo) {
+        expect(await session.getRedboxSource()).toMatchSnapshot()
+      } else {
+        expect(await session.getRedboxSource()).toMatchInlineSnapshot()
+      }
     } else {
-      expect(await session.getRedboxSource()).toMatchSnapshot()
+      if (!turbo) {
+        expect(await session.getRedboxSource()).toMatchSnapshot()
+      } else {
+        expect(await session.getRedboxSource()).toMatchInlineSnapshot()
+      }
     }
 
     await cleanup()
@@ -411,7 +453,11 @@ describe('ReactRefreshLogBox', () => {
 
     // We get an error because Foo didn't import React. Fair.
     expect(await session.hasRedbox(true)).toBe(true)
-    expect(await session.getRedboxSource()).toMatchSnapshot()
+    if (!turbo) {
+      expect(await session.getRedboxSource()).toMatchSnapshot()
+    } else {
+      expect(await session.getRedboxSource()).toMatchInlineSnapshot()
+    }
 
     // Let's add that to Foo.
     await session.patch(
@@ -464,9 +510,17 @@ describe('ReactRefreshLogBox', () => {
     await new Promise((resolve) => setTimeout(resolve, 1000))
     expect(await session.hasRedbox(true)).toBe(true)
     if (process.platform === 'win32') {
-      expect(await session.getRedboxSource()).toMatchSnapshot()
+      if (!turbo) {
+        expect(await session.getRedboxSource()).toMatchSnapshot()
+      } else {
+        expect(await session.getRedboxSource()).toMatchInlineSnapshot()
+      }
     } else {
-      expect(await session.getRedboxSource()).toMatchSnapshot()
+      if (!turbo) {
+        expect(await session.getRedboxSource()).toMatchSnapshot()
+      } else {
+        expect(await session.getRedboxSource()).toMatchInlineSnapshot()
+      }
     }
 
     // Make a syntax error.
@@ -484,12 +538,20 @@ describe('ReactRefreshLogBox', () => {
 
     await new Promise((resolve) => setTimeout(resolve, 1000))
     expect(await session.hasRedbox(true)).toBe(true)
-    expect(await session.getRedboxSource()).toMatchSnapshot()
+    if (!turbo) {
+      expect(await session.getRedboxSource()).toMatchSnapshot()
+    } else {
+      expect(await session.getRedboxSource()).toMatchInlineSnapshot()
+    }
 
     // Test that runtime error does not take over:
     await new Promise((resolve) => setTimeout(resolve, 2000))
     expect(await session.hasRedbox(true)).toBe(true)
-    expect(await session.getRedboxSource()).toMatchSnapshot()
+    if (!turbo) {
+      expect(await session.getRedboxSource()).toMatchSnapshot()
+    } else {
+      expect(await session.getRedboxSource()).toMatchInlineSnapshot()
+    }
 
     await cleanup()
   })
@@ -550,7 +612,11 @@ describe('ReactRefreshLogBox', () => {
     )
 
     expect(await session.hasRedbox(true)).toBe(true)
-    expect(await session.getRedboxSource()).toMatchSnapshot()
+    if (!turbo) {
+      expect(await session.getRedboxSource()).toMatchSnapshot()
+    } else {
+      expect(await session.getRedboxSource()).toMatchInlineSnapshot()
+    }
     expect(
       await session.evaluate(() => document.querySelector('h2').textContent)
     ).toBe('error')
@@ -618,7 +684,11 @@ describe('ReactRefreshLogBox', () => {
     expect(await session.hasRedbox(true)).toBe(true)
 
     const source = await session.getRedboxSource()
-    expect(source).toMatchSnapshot()
+    if (!turbo) {
+      expect(source).toMatchSnapshot()
+    } else {
+      expect(source).toMatchInlineSnapshot()
+    }
 
     await cleanup()
   })
@@ -669,7 +739,11 @@ describe('ReactRefreshLogBox', () => {
     )
 
     expect(await session.hasRedbox(true)).toBe(true)
-    expect(await session.getRedboxSource()).toMatchSnapshot()
+    if (!turbo) {
+      expect(await session.getRedboxSource()).toMatchSnapshot()
+    } else {
+      expect(await session.getRedboxSource()).toMatchInlineSnapshot()
+    }
 
     await session.patch(
       'Child.js',
@@ -725,7 +799,11 @@ describe('ReactRefreshLogBox', () => {
     await session.patch('index.module.css', `button {}`)
     expect(await session.hasRedbox(true)).toBe(true)
     const source2 = await session.getRedboxSource()
-    expect(source2).toMatchSnapshot()
+    if (!turbo) {
+      expect(source2).toMatchSnapshot()
+    } else {
+      expect(source2).toMatchInlineSnapshot()
+    }
 
     await cleanup()
   })
@@ -756,7 +834,12 @@ describe('ReactRefreshLogBox', () => {
     expect(await session.hasRedbox(true)).toBe(true)
 
     const header = await session.getRedboxDescription()
-    expect(header).toMatchSnapshot()
+    if (!turbo) {
+      expect(header).toMatchSnapshot()
+    } else {
+      expect(header).toMatchInlineSnapshot()
+    }
+
     expect(
       await session.evaluate(
         () =>
@@ -766,18 +849,22 @@ describe('ReactRefreshLogBox', () => {
             .length
       )
     ).toBe(1)
-    expect(
-      await session.evaluate(
-        () =>
-          (
-            document
-              .querySelector('body > nextjs-portal')
-              .shadowRoot.querySelector(
-                '#nextjs__container_errors_desc a:nth-of-type(1)'
-              ) as any
-          ).href
-      )
-    ).toMatchSnapshot()
+    const value2 = await session.evaluate(
+      () =>
+        (
+          document
+            .querySelector('body > nextjs-portal')
+            .shadowRoot.querySelector(
+              '#nextjs__container_errors_desc a:nth-of-type(1)'
+            ) as any
+        ).href
+    )
+
+    if (!turbo) {
+      expect(value2).toMatchSnapshot()
+    } else {
+      expect(value2).toMatchInlineSnapshot()
+    }
 
     await session.patch(
       'index.js',
@@ -802,7 +889,12 @@ describe('ReactRefreshLogBox', () => {
     expect(await session.hasRedbox(true)).toBe(true)
 
     const header2 = await session.getRedboxDescription()
-    expect(header2).toMatchSnapshot()
+    if (!turbo) {
+      expect(header2).toMatchSnapshot()
+    } else {
+      expect(header2).toMatchInlineSnapshot()
+    }
+
     expect(
       await session.evaluate(
         () =>
@@ -812,18 +904,23 @@ describe('ReactRefreshLogBox', () => {
             .length
       )
     ).toBe(1)
-    expect(
-      await session.evaluate(
-        () =>
-          (
-            document
-              .querySelector('body > nextjs-portal')
-              .shadowRoot.querySelector(
-                '#nextjs__container_errors_desc a:nth-of-type(1)'
-              ) as any
-          ).href
-      )
-    ).toMatchSnapshot()
+
+    const value3 = await session.evaluate(
+      () =>
+        (
+          document
+            .querySelector('body > nextjs-portal')
+            .shadowRoot.querySelector(
+              '#nextjs__container_errors_desc a:nth-of-type(1)'
+            ) as any
+        ).href
+    )
+
+    if (!turbo) {
+      expect(value3).toMatchSnapshot()
+    } else {
+      expect(value3).toMatchInlineSnapshot()
+    }
 
     await session.patch(
       'index.js',
@@ -848,7 +945,11 @@ describe('ReactRefreshLogBox', () => {
     expect(await session.hasRedbox(true)).toBe(true)
 
     const header3 = await session.getRedboxDescription()
-    expect(header3).toMatchSnapshot()
+    if (!turbo) {
+      expect(header3).toMatchSnapshot()
+    } else {
+      expect(header3).toMatchInlineSnapshot()
+    }
     expect(
       await session.evaluate(
         () =>
@@ -858,18 +959,22 @@ describe('ReactRefreshLogBox', () => {
             .length
       )
     ).toBe(1)
-    expect(
-      await session.evaluate(
-        () =>
-          (
-            document
-              .querySelector('body > nextjs-portal')
-              .shadowRoot.querySelector(
-                '#nextjs__container_errors_desc a:nth-of-type(1)'
-              ) as any
-          ).href
-      )
-    ).toMatchSnapshot()
+
+    const value4 = await session.evaluate(
+      () =>
+        (
+          document
+            .querySelector('body > nextjs-portal')
+            .shadowRoot.querySelector(
+              '#nextjs__container_errors_desc a:nth-of-type(1)'
+            ) as any
+        ).href
+    )
+    if (!turbo) {
+      expect(value4).toMatchSnapshot()
+    } else {
+      expect(value4).toMatchInlineSnapshot()
+    }
 
     await session.patch(
       'index.js',
@@ -906,30 +1011,35 @@ describe('ReactRefreshLogBox', () => {
             .length
       )
     ).toBe(2)
-    expect(
-      await session.evaluate(
-        () =>
-          (
-            document
-              .querySelector('body > nextjs-portal')
-              .shadowRoot.querySelector(
-                '#nextjs__container_errors_desc a:nth-of-type(1)'
-              ) as any
-          ).href
-      )
-    ).toMatchSnapshot()
-    expect(
-      await session.evaluate(
-        () =>
-          (
-            document
-              .querySelector('body > nextjs-portal')
-              .shadowRoot.querySelector(
-                '#nextjs__container_errors_desc a:nth-of-type(2)'
-              ) as any
-          ).href
-      )
-    ).toMatchSnapshot()
+    const value5 = await session.evaluate(
+      () =>
+        (
+          document
+            .querySelector('body > nextjs-portal')
+            .shadowRoot.querySelector(
+              '#nextjs__container_errors_desc a:nth-of-type(1)'
+            ) as any
+        ).href
+    )
+
+    const value6 = await session.evaluate(
+      () =>
+        (
+          document
+            .querySelector('body > nextjs-portal')
+            .shadowRoot.querySelector(
+              '#nextjs__container_errors_desc a:nth-of-type(2)'
+            ) as any
+        ).href
+    )
+
+    if (!turbo) {
+      expect(value5).toMatchSnapshot()
+      expect(value6).toMatchSnapshot()
+    } else {
+      expect(value5).toMatchInlineSnapshot()
+      expect(value6).toMatchInlineSnapshot()
+    }
 
     await cleanup()
   })
@@ -970,7 +1080,7 @@ describe('ReactRefreshLogBox', () => {
       'index.js',
       `
         class Hello {}
-        
+
         export default () => {
           throw Hello
           return (

@@ -2,9 +2,19 @@ import { sandbox } from './helpers'
 import { createNext, FileRef } from 'e2e-utils'
 import { NextInstance } from 'test/lib/next-modes/base'
 import path from 'path'
+import { shouldRunTurboDevTest } from 'next-test-utils'
+
+const shouldRunTurboDev = shouldRunTurboDevTest()
 
 // TODO-APP: Investigate snapshot mismatch
-describe('ReactRefreshLogBox app', () => {
+describe.each([
+  ['dev', false],
+  ['turbo', true],
+])('ReactRefreshLogBox app %s', (_name, turbo) => {
+  if (!!turbo && !shouldRunTurboDev) {
+    return
+  }
+
   if (process.env.NEXT_TEST_REACT_VERSION === '^17') {
     it('should skip for react v17', () => {})
     return
@@ -14,6 +24,7 @@ describe('ReactRefreshLogBox app', () => {
 
   beforeAll(async () => {
     next = await createNext({
+      turbo: !!turbo,
       files: new FileRef(path.join(__dirname, 'fixtures', 'default-template')),
       dependencies: {
         react: 'latest',

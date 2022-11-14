@@ -3,14 +3,24 @@ import webdriver from 'next-webdriver'
 import { NextInstance } from 'test/lib/next-modes/base'
 import { join } from 'path'
 import { BrowserInterface } from 'test/lib/browsers/base'
-import { check } from 'next-test-utils'
+import { check, shouldRunTurboDevTest } from 'next-test-utils'
 
-describe('client-dev-overlay', () => {
+const shouldRunTurboDev = shouldRunTurboDevTest()
+
+describe.each([
+  ['dev', false],
+  ['turbo', true],
+])('client-dev-overlay %s', (_name, turbo) => {
+  if (!!turbo && !shouldRunTurboDev) {
+    return
+  }
+
   let next: NextInstance
   let browser: BrowserInterface
 
   beforeAll(async () => {
     next = await createNext({
+      turbo: !!turbo,
       files: {
         pages: new FileRef(join(__dirname, 'app/pages')),
       },

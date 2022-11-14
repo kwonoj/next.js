@@ -1,16 +1,27 @@
 import { createNext } from 'e2e-utils'
 import { NextInstance } from 'test/lib/next-modes/base'
 import { sandbox } from '../acceptance/helpers'
+import { shouldRunTurboDevTest } from 'next-test-utils'
 
 const middlewarePath = 'middleware.js'
 const middlewareWarning = `A middleware can not alter response's body`
 
-describe('middlewares', () => {
+const shouldRunTurboDev = shouldRunTurboDevTest()
+
+describe.each([
+  ['dev', false],
+  ['turbo', true],
+])('middlewares %s', (_name, turbo) => {
+  if (!!turbo && !shouldRunTurboDev) {
+    return
+  }
+
   let next: NextInstance
   let cleanup
 
   beforeAll(async () => {
     next = await createNext({
+      turbo: !!turbo,
       files: {},
       skipStart: true,
     })

@@ -3,13 +3,27 @@ import { join } from 'path'
 import webdriver from 'next-webdriver'
 import { createNext, FileRef } from 'e2e-utils'
 import { NextInstance } from 'test/lib/next-modes/base'
-import { fetchViaHTTP, renderViaHTTP } from 'next-test-utils'
+import {
+  fetchViaHTTP,
+  renderViaHTTP,
+  shouldRunTurboDevTest,
+} from 'next-test-utils'
 
-describe('misc basic dev tests', () => {
+const shouldRunTurboDev = shouldRunTurboDevTest()
+
+describe.each([
+  ['dev', false],
+  ['turbo', true],
+])('misc basic dev tests %s', (_name, turbo) => {
+  if (!!turbo && !shouldRunTurboDev) {
+    return
+  }
+
   let next: NextInstance
 
   beforeAll(async () => {
     next = await createNext({
+      turbo: !!turbo,
       files: {
         pages: new FileRef(join(__dirname, 'misc/pages')),
         public: new FileRef(join(__dirname, 'misc/public')),

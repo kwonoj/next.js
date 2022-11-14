@@ -1,24 +1,34 @@
 import { createNext } from 'e2e-utils'
-import { check } from 'next-test-utils'
+import { check, shouldRunTurboDevTest } from 'next-test-utils'
 import { NextInstance } from 'test/lib/next-modes/base'
 
-describe('watch-config-file', () => {
+const shouldRunTurboDev = shouldRunTurboDevTest()
+
+describe.each([
+  ['dev', false],
+  ['turbo', true],
+])('watch-config-file %s', (_name, turbo) => {
+  if (!!turbo && !shouldRunTurboDev) {
+    return
+  }
+
   let next: NextInstance
 
   beforeAll(async () => {
     next = await createNext({
+      turbo: !!turbo,
       files: {
         'pages/index.js': `
-          export default function Page() { 
+          export default function Page() {
             return <p>hello world</p>
-          } 
+          }
         `,
         'next.config.js': `
         const nextConfig = {
           reactStrictMode: true,
         }
-        
-        module.exports = nextConfig        
+
+        module.exports = nextConfig
         `,
       },
       dependencies: {},
@@ -36,7 +46,7 @@ describe('watch-config-file', () => {
       await next.patchFile(
         'next.config.js',
         `
-          /** changed - ${i} **/  
+          /** changed - ${i} **/
           const nextConfig = {
             reactStrictMode: true,
           }

@@ -2,12 +2,23 @@
 import { sandbox } from './helpers'
 import { createNext } from 'e2e-utils'
 import { NextInstance } from 'test/lib/next-modes/base'
+import { shouldRunTurboDevTest } from 'next-test-utils'
 
-describe('ReactRefresh', () => {
+const shouldRunTurboDev = shouldRunTurboDevTest()
+
+describe.each([
+  ['dev', false],
+  ['turbo', true],
+])('ReactRefresh %s', (_name, turbo) => {
+  if (!!turbo && !shouldRunTurboDev) {
+    return
+  }
+
   let next: NextInstance
 
   beforeAll(async () => {
     next = await createNext({
+      turbo: !!turbo,
       files: {},
       skipStart: true,
     })

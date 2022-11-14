@@ -9,15 +9,26 @@ import {
   hasRedbox,
   renderViaHTTP,
   waitFor,
+  shouldRunTurboDevTest,
 } from 'next-test-utils'
 import { createNext, FileRef } from 'e2e-utils'
 import { NextInstance } from 'test/lib/next-modes/base'
 
-describe('basic HMR', () => {
+const shouldRunTurboDev = shouldRunTurboDevTest()
+
+describe.each([
+  ['dev', false],
+  ['turbo', true],
+])('basic HMR %s', (_name, turbo) => {
+  if (!!turbo && !shouldRunTurboDev) {
+    return
+  }
+
   let next: NextInstance
 
   beforeAll(async () => {
     next = await createNext({
+      turbo: !!turbo,
       files: {
         pages: new FileRef(join(__dirname, 'hmr/pages')),
         components: new FileRef(join(__dirname, 'hmr/components')),

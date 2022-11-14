@@ -2,13 +2,23 @@ import { join } from 'path'
 import webdriver from 'next-webdriver'
 import { createNext, FileRef } from 'e2e-utils'
 import { NextInstance } from 'test/lib/next-modes/base'
-import { check } from 'next-test-utils'
+import { check, shouldRunTurboDevTest } from 'next-test-utils'
 
-describe('TailwindCSS JIT', () => {
+const shouldRunTurboDev = shouldRunTurboDevTest()
+
+describe.each([
+  ['dev', false],
+  ['turbo', true],
+])('TailwindCSS JIT %s', (_name, turbo) => {
+  if (!!turbo && !shouldRunTurboDev) {
+    return
+  }
+
   let next: NextInstance
 
   beforeAll(async () => {
     next = await createNext({
+      turbo: !!turbo,
       files: {
         'postcss.config.js': new FileRef(
           join(__dirname, 'tailwind-jit/postcss.config.js')

@@ -1,17 +1,28 @@
 import { createNext } from 'e2e-utils'
 import { NextInstance } from 'test/lib/next-modes/base'
 import webdriver from 'next-webdriver'
+import { shouldRunTurboDevTest } from 'next-test-utils'
 
-describe('Dotenv default expansion', () => {
+const shouldRunTurboDev = shouldRunTurboDevTest()
+
+describe.each([
+  ['dev', false],
+  ['turbo', true],
+])('Dotenv default expansion %s', (_name, turbo) => {
+  if (!!turbo && !shouldRunTurboDev) {
+    return
+  }
+
   let next: NextInstance
 
   beforeAll(async () => {
     next = await createNext({
+      turbo: !!turbo,
       files: {
         'pages/index.js': `
-          export default function Page() { 
+          export default function Page() {
             return <p>{process.env.NEXT_PUBLIC_TEST}</p>
-          } 
+          }
         `,
         '.env': `
           NEXT_PUBLIC_TEST=\${MISSING_KEY:-default}

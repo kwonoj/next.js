@@ -3,12 +3,23 @@ import { sandbox } from './helpers'
 import { createNext, FileRef } from 'e2e-utils'
 import { NextInstance } from 'test/lib/next-modes/base'
 import path from 'path'
+import { shouldRunTurboDevTest } from 'next-test-utils'
 
-describe('ReactRefreshRequire app', () => {
+const shouldRunTurboDev = shouldRunTurboDevTest()
+
+describe.each([
+  ['dev', false],
+  ['turbo', true],
+])('ReactRefreshRequire app %s', (_name, turbo) => {
+  if (!!turbo && !shouldRunTurboDev) {
+    return
+  }
+
   let next: NextInstance
 
   beforeAll(async () => {
     next = await createNext({
+      turbo: !!turbo,
       files: new FileRef(path.join(__dirname, 'fixtures', 'default-template')),
       dependencies: {
         react: 'latest',

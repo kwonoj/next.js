@@ -2,14 +2,24 @@ import { join } from 'path'
 import cheerio from 'cheerio'
 import webdriver from 'next-webdriver'
 import { createNext, FileRef } from 'e2e-utils'
-import { renderViaHTTP, check } from 'next-test-utils'
+import { renderViaHTTP, check, shouldRunTurboDevTest } from 'next-test-utils'
 import { NextInstance } from 'test/lib/next-modes/base'
 
-describe('basic next/dynamic usage', () => {
+const shouldRunTurboDev = shouldRunTurboDevTest()
+
+describe.each([
+  ['dev', false],
+  ['turbo', true],
+])('basic next/dynamic usage %s', (_name, turbo) => {
+  if (!!turbo && !shouldRunTurboDev) {
+    return
+  }
+
   let next: NextInstance
 
   beforeAll(async () => {
     next = await createNext({
+      turbo: !!turbo,
       files: {
         components: new FileRef(join(__dirname, 'next-dynamic/components')),
         pages: new FileRef(join(__dirname, 'next-dynamic/pages')),

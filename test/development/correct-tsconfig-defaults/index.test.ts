@@ -1,12 +1,22 @@
 import { createNext } from 'e2e-utils'
-import { check } from 'next-test-utils'
+import { check, shouldRunTurboDevTest } from 'next-test-utils'
 import { NextInstance } from 'test/lib/next-modes/base'
 
-describe('correct tsconfig.json defaults', () => {
+const shouldRunTurboDev = shouldRunTurboDevTest()
+
+describe.each([
+  ['dev', false],
+  ['turbo', true],
+])('correct tsconfig.json defaults %s', (_name, turbo) => {
+  if (!!turbo && !shouldRunTurboDev) {
+    return
+  }
+
   let next: NextInstance
 
   beforeAll(async () => {
     next = await createNext({
+      turbo: !!turbo,
       files: {
         'pages/index.tsx': 'export default function Page() {}',
       },

@@ -5,13 +5,23 @@ import {
   hasRedbox,
   renderViaHTTP,
   getRedboxSource,
+  shouldRunTurboDevTest,
 } from 'next-test-utils'
 import cheerio from 'cheerio'
 import { join } from 'path'
 import webdriver from 'next-webdriver'
 import fs from 'fs-extra'
 
-describe('tsconfig-path-reloading', () => {
+const shouldRunTurboDev = shouldRunTurboDevTest()
+
+describe.each([
+  ['dev', false],
+  ['turbo', true],
+])('tsconfig-path-reloading %s', (_name, turbo) => {
+  if (!!turbo && !shouldRunTurboDev) {
+    return
+  }
+
   let next: NextInstance
   const tsConfigFile = 'tsconfig.json'
   const indexPage = 'pages/index.tsx'
@@ -24,6 +34,7 @@ describe('tsconfig-path-reloading', () => {
       )
 
       next = await createNext({
+        turbo: !!turbo,
         files: {
           components: new FileRef(join(__dirname, 'app/components')),
           pages: new FileRef(join(__dirname, 'app/pages')),

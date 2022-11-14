@@ -1,12 +1,23 @@
 import { sandbox } from './helpers'
 import { createNext } from 'e2e-utils'
 import { NextInstance } from 'test/lib/next-modes/base'
+import { shouldRunTurboDevTest } from 'next-test-utils'
 
-describe('ReactRefreshLogBox', () => {
+const shouldRunTurboDev = shouldRunTurboDevTest()
+
+describe.each([
+  ['dev', false],
+  ['turbo', true],
+])('ReactRefreshLogBox %s', (_name, turbo) => {
+  if (!!turbo && !shouldRunTurboDev) {
+    return
+  }
+
   let next: NextInstance
 
   beforeAll(async () => {
     next = await createNext({
+      turbo: !!turbo,
       files: {},
       skipStart: true,
     })
@@ -20,7 +31,7 @@ describe('ReactRefreshLogBox', () => {
         [
           'pages/_app.js',
           `
-            
+
           `,
         ],
       ])
@@ -50,7 +61,7 @@ describe('ReactRefreshLogBox', () => {
         [
           'pages/_document.js',
           `
-            
+
           `,
         ],
       ])
@@ -107,7 +118,11 @@ describe('ReactRefreshLogBox', () => {
       ])
     )
     expect(await session.hasRedbox(true)).toBe(true)
-    expect(await session.getRedboxSource()).toMatchSnapshot()
+    if (!turbo) {
+      expect(await session.getRedboxSource()).toMatchSnapshot()
+    } else {
+      expect(await session.getRedboxSource()).toMatchInlineSnapshot()
+    }
 
     await session.patch(
       'pages/_app.js',
@@ -156,7 +171,11 @@ describe('ReactRefreshLogBox', () => {
       ])
     )
     expect(await session.hasRedbox(true)).toBe(true)
-    expect(await session.getRedboxSource()).toMatchSnapshot()
+    if (!turbo) {
+      expect(await session.getRedboxSource()).toMatchSnapshot()
+    } else {
+      expect(await session.getRedboxSource()).toMatchInlineSnapshot()
+    }
 
     await session.patch(
       'pages/_document.js',

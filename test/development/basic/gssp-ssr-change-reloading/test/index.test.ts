@@ -3,8 +3,16 @@
 import { join } from 'path'
 import webdriver from 'next-webdriver'
 import { createNext, FileRef } from 'e2e-utils'
-import { check, getRedboxHeader, hasRedbox, waitFor } from 'next-test-utils'
+import {
+  check,
+  getRedboxHeader,
+  hasRedbox,
+  waitFor,
+  shouldRunTurboDevTest,
+} from 'next-test-utils'
 import { NextInstance } from 'test/lib/next-modes/base'
+
+const shouldRunTurboDev = shouldRunTurboDevTest()
 
 const installCheckVisible = (browser) => {
   return browser.eval(`(function() {
@@ -19,11 +27,19 @@ const installCheckVisible = (browser) => {
   })()`)
 }
 
-describe('GS(S)P Server-Side Change Reloading', () => {
+describe.each([
+  ['dev', false],
+  ['turbo', true],
+])('GS(S)P Server-Side Change Reloading %s', (_name, turbo) => {
+  if (!!turbo && !shouldRunTurboDev) {
+    return
+  }
+
   let next: NextInstance
 
   beforeAll(async () => {
     next = await createNext({
+      turbo: !!turbo,
       files: {
         pages: new FileRef(join(__dirname, '../pages')),
         lib: new FileRef(join(__dirname, '../lib')),

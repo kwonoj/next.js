@@ -2,12 +2,18 @@ import { join } from 'path'
 import webdriver from 'next-webdriver'
 import { createNext, FileRef } from 'e2e-utils'
 import { NextInstance } from 'test/lib/next-modes/base'
-import { fetchViaHTTP } from 'next-test-utils'
+import { fetchViaHTTP, shouldRunTurboDevTest } from 'next-test-utils'
+
+const shouldRunTurboDev = shouldRunTurboDevTest()
 
 describe.each([
   ['dev', false],
   ['turbo', true],
-])('styled-components SWC transform', (_name, turbo) => {
+])('styled-components SWC transform %s', (_name, turbo) => {
+  if (!!turbo && !shouldRunTurboDev) {
+    return
+  }
+
   let next: NextInstance
 
   beforeAll(async () => {
