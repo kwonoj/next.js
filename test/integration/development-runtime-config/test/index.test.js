@@ -9,16 +9,19 @@ import {
   launchApp,
   waitFor,
   killApp,
+  shouldRunTurboDevTest,
 } from 'next-test-utils'
 
+const shouldRunTurboDev = shouldRunTurboDevTest()
 const appDir = join(__dirname, '../')
 const nextConfig = join(appDir, 'next.config.js')
 
-const runApp = async (config) => {
+const runApp = async (config, turbo) => {
   const port = await findPort()
 
   let stderr = ''
   const app = await launchApp(appDir, port, {
+    turbo: !!turbo,
     onStderr(err) {
       stderr += err
     },
@@ -55,7 +58,14 @@ describe('should work with runtime-config in next.config.js', () => {
     await runApp({})
   })
 
-  test('with runtime-config', async () => {
+  test.each([
+    ['dev', false],
+    ['turbo', true],
+  ])('with runtime-config %s', async (_name, turbo) => {
+    if (!!turbo && !shouldRunTurboDev) {
+      return
+    }
+
     const config = {
       serverRuntimeConfig: {
         mySecret: '**********',
@@ -72,6 +82,6 @@ describe('should work with runtime-config in next.config.js', () => {
     `
     )
 
-    await runApp(config)
+    await runApp(config, turbo)
   })
 })

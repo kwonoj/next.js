@@ -7,14 +7,23 @@ import {
   findPort,
   killApp,
   renderViaHTTP,
+  shouldRunTurboDevTest,
 } from 'next-test-utils'
 
+const shouldRunTurboDev = shouldRunTurboDevTest()
 const appDir = path.join(__dirname, '..')
 
 describe('Errors on conflict between public file and page file', () => {
-  it('Throws error during development', async () => {
+  it.each([
+    ['dev', false],
+    ['turbo', true],
+  ])('Throws error during %s', async (_name, turbo) => {
+    if (!!turbo && !shouldRunTurboDev) {
+      return
+    }
+
     const appPort = await findPort()
-    const app = await launchApp(appDir, appPort)
+    const app = await launchApp(appDir, appPort, { turbo })
     const conflicts = ['/another/conflict', '/hello']
 
     for (const conflict of conflicts) {

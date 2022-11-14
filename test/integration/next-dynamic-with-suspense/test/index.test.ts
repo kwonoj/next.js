@@ -8,16 +8,25 @@ import {
   launchApp,
   killApp,
   hasRedbox,
+  shouldRunTurboDevTest,
 } from 'next-test-utils'
 
+const shouldRunTurboDev = shouldRunTurboDevTest()
 let app
 let appPort: number
 const appDir = join(__dirname, '../')
 
-describe('next/dynamic with suspense', () => {
+describe.each([
+  ['dev', false],
+  ['turbo', true],
+])('next/dynamic with suspense %s', (_name, turbo) => {
+  if (!!turbo && !shouldRunTurboDev) {
+    return
+  }
+
   beforeAll(async () => {
     appPort = await findPort()
-    app = await launchApp(appDir, appPort)
+    app = await launchApp(appDir, appPort, { turbo })
   })
   afterAll(() => killApp(app))
 

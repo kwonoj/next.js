@@ -12,9 +12,11 @@ import {
   nextBuild,
   nextStart,
   check,
+  shouldRunTurboDevTest,
 } from 'next-test-utils'
 import { join } from 'path'
 
+const shouldRunTurboDev = shouldRunTurboDevTest()
 let app
 let appPort
 const appDir = join(__dirname, '../')
@@ -104,10 +106,17 @@ function runTests(dev = false) {
 }
 
 describe('Async modules', () => {
-  describe('dev mode', () => {
+  describe.each([
+    ['dev', false],
+    ['turbo', true],
+  ])('%s mode', (_name, turbo) => {
+    if (!!turbo && !shouldRunTurboDev) {
+      return
+    }
+
     beforeAll(async () => {
       appPort = await findPort()
-      app = await launchApp(appDir, appPort)
+      app = await launchApp(appDir, appPort, { turbo })
     })
     afterAll(async () => {
       await killApp(app)

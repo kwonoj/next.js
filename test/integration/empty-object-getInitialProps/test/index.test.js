@@ -9,8 +9,10 @@ import {
   killApp,
   waitFor,
   check,
+  shouldRunTurboDevTest,
 } from 'next-test-utils'
 
+const shouldRunTurboDev = shouldRunTurboDevTest()
 const appDir = join(__dirname, '..')
 let output = ''
 let appPort
@@ -20,10 +22,18 @@ const handleOutput = (msg) => {
   output += msg
 }
 
-describe('Empty Project', () => {
+describe.each([
+  ['dev', false],
+  ['turbo', true],
+])('Empty Project %s', (_name, turbo) => {
+  if (!!turbo && !shouldRunTurboDev) {
+    return
+  }
+
   beforeAll(async () => {
     appPort = await findPort()
     app = await launchApp(appDir, appPort, {
+      turbo: !!turbo,
       onStdout: handleOutput,
       onStderr: handleOutput,
     })

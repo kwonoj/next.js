@@ -7,8 +7,10 @@ import {
   findPort,
   killApp,
   waitFor,
+  shouldRunTurboDevTest,
 } from 'next-test-utils'
 
+const shouldRunTurboDev = shouldRunTurboDevTest()
 const appDir = join(__dirname, '..')
 
 describe('Empty configuration', () => {
@@ -23,20 +25,31 @@ describe('Empty configuration', () => {
     )
   })
 
-  it('should show relevant warning and compile successfully for next dev', async () => {
-    let stderr = ''
+  it.each([
+    ['dev', false],
+    ['turbo', true],
+  ])(
+    'should show relevant warning and compile successfully for next %s',
+    async (_name, turbo) => {
+      if (!!turbo && !shouldRunTurboDev) {
+        return
+      }
 
-    const appPort = await findPort()
-    const app = await launchApp(appDir, appPort, {
-      onStderr(msg) {
-        stderr += msg || ''
-      },
-    })
-    await waitFor(1000)
-    await killApp(app)
+      let stderr = ''
 
-    expect(stderr).toMatch(
-      /Detected next\.config\.js, no exported configuration found\. https:\/\//
-    )
-  })
+      const appPort = await findPort()
+      const app = await launchApp(appDir, appPort, {
+        turbo: !!turbo,
+        onStderr(msg) {
+          stderr += msg || ''
+        },
+      })
+      await waitFor(1000)
+      await killApp(app)
+
+      expect(stderr).toMatch(
+        /Detected next\.config\.js, no exported configuration found\. https:\/\//
+      )
+    }
+  )
 })

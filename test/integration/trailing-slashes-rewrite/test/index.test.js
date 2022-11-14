@@ -9,8 +9,10 @@ import {
   initNextServerScript,
   renderViaHTTP,
   launchApp,
+  shouldRunTurboDevTest,
 } from 'next-test-utils'
 
+const shouldRunTurboDev = shouldRunTurboDevTest()
 let app
 let appPort
 let proxyPort
@@ -73,7 +75,14 @@ describe('Trailing Slash Rewrite Proxying', () => {
     runTests()
   })
 
-  describe('dev mode', () => {
+  describe.each([
+    ['dev', false],
+    ['turbo', true],
+  ])('%s mode', (_name, turbo) => {
+    if (!!turbo && !shouldRunTurboDev) {
+      return
+    }
+
     beforeAll(async () => {
       proxyPort = await findPort()
       proxyServer = await initNextServerScript(
@@ -88,7 +97,7 @@ describe('Trailing Slash Rewrite Proxying', () => {
       nextConfig.replace('__EXTERNAL_PORT__', proxyPort)
 
       appPort = await findPort()
-      app = await launchApp(appDir, appPort)
+      app = await launchApp(appDir, appPort, { turbo })
     })
     afterAll(async () => {
       nextConfig.restore()

@@ -12,10 +12,12 @@ import {
   launchApp,
   nextBuild,
   nextStart,
+  shouldRunTurboDevTest,
 } from 'next-test-utils'
 
 jest.setTimeout(1000 * 60 * 2)
 
+const shouldRunTurboDev = shouldRunTurboDevTest()
 const context = {
   appDir: join(__dirname, '../'),
   logs: { output: '', stdout: '', stderr: '' },
@@ -93,16 +95,31 @@ describe('Edge runtime code with imports', () => {
 
     beforeEach(() => init(importStatement))
 
-    it('throws unsupported module error in dev at runtime and highlights the faulty line', async () => {
-      context.app = await launchApp(context.appDir, context.appPort, appOption)
-      const res = await fetchViaHTTP(context.appPort, url)
-      expect(res.status).toBe(500)
-      expectUnsupportedModuleDevError(
-        moduleName,
-        importStatement,
-        await res.text()
-      )
-    })
+    it.each([
+      ['dev', false],
+      ['turbo', true],
+    ])(
+      'throws unsupported module error in %s at runtime and highlights the faulty line',
+      async (_name, turbo) => {
+        if (!!turbo && !shouldRunTurboDev) {
+          return
+        }
+
+        context.app = await launchApp(
+          context.appDir,
+          context.appPort,
+          appOption,
+          { turbo: !!turbo }
+        )
+        const res = await fetchViaHTTP(context.appPort, url)
+        expect(res.status).toBe(500)
+        expectUnsupportedModuleDevError(
+          moduleName,
+          importStatement,
+          await res.text()
+        )
+      }
+    )
 
     it('throws unsupported module error in production at runtime and prints error on logs', async () => {
       const { stderr } = await nextBuild(context.appDir, undefined, {
@@ -123,12 +140,12 @@ describe('Edge runtime code with imports', () => {
       init(importStatement) {
         context.api.write(`
           import { NextResponse } from 'next/server'
-  
+
           export default async function handler(request) {
             const { writeFile } = ${importStatement}
             return Response.json({ ok: writeFile() })
           }
-  
+
           export const config = { runtime: 'experimental-edge' }
         `)
       },
@@ -139,7 +156,7 @@ describe('Edge runtime code with imports', () => {
       init(importStatement) {
         context.middleware.write(`
           import { NextResponse } from 'next/server'
-  
+
           export async function middleware(request) {
             const { writeFile } = ${importStatement}
             return NextResponse.next()
@@ -153,16 +170,31 @@ describe('Edge runtime code with imports', () => {
 
     beforeEach(() => init(importStatement))
 
-    it('throws unsupported module error in dev at runtime and highlights the faulty line', async () => {
-      context.app = await launchApp(context.appDir, context.appPort, appOption)
-      const res = await fetchViaHTTP(context.appPort, url)
-      expect(res.status).toBe(500)
-      expectUnsupportedModuleDevError(
-        moduleName,
-        importStatement,
-        await res.text()
-      )
-    })
+    it.each([
+      ['dev', false],
+      ['turbo', true],
+    ])(
+      'throws unsupported module error in %s at runtime and highlights the faulty line',
+      async (_name, turbo) => {
+        if (!!turbo && !shouldRunTurboDev) {
+          return
+        }
+
+        context.app = await launchApp(
+          context.appDir,
+          context.appPort,
+          appOption,
+          { turbo: !!turbo }
+        )
+        const res = await fetchViaHTTP(context.appPort, url)
+        expect(res.status).toBe(500)
+        expectUnsupportedModuleDevError(
+          moduleName,
+          importStatement,
+          await res.text()
+        )
+      }
+    )
 
     it('throws unsupported module error in production at runtime and prints error on logs', async () => {
       const { stderr } = await nextBuild(context.appDir, undefined, {
@@ -183,11 +215,11 @@ describe('Edge runtime code with imports', () => {
       init(importStatement) {
         context.api.write(`
           import throwAsync from '../../lib'
-  
+
           export default async function handler(request) {
             return Response.json({ ok: await throwAsync() })
           }
-  
+
           export const config = { runtime: 'experimental-edge' }
         `)
       },
@@ -199,7 +231,7 @@ describe('Edge runtime code with imports', () => {
         context.middleware.write(`
           import { NextResponse } from 'next/server'
           import throwAsync from './lib'
-  
+
           export async function middleware(request) {
             await throwAsync()
             return NextResponse.next()
@@ -222,20 +254,29 @@ describe('Edge runtime code with imports', () => {
       `)
       })
 
-      it('throws unsupported module error in dev at runtime and highlights the faulty line', async () => {
-        context.app = await launchApp(
-          context.appDir,
-          context.appPort,
-          appOption
-        )
-        const res = await fetchViaHTTP(context.appPort, url)
-        expect(res.status).toBe(500)
-        expectUnsupportedModuleDevError(
-          moduleName,
-          importStatement,
-          await res.text()
-        )
-      })
+      it.each([
+        ['dev', false],
+        ['turbo', true],
+      ])(
+        'throws unsupported module error in %s at runtime and highlights the faulty line',
+        async (_name, turbo) => {
+          if (!!turbo && !shouldRunTurboDev) {
+            return
+          }
+
+          context.app = await launchApp(context.appDir, context.appPort, {
+            ...appOption,
+            turbo: !!turbo,
+          })
+          const res = await fetchViaHTTP(context.appPort, url)
+          expect(res.status).toBe(500)
+          expectUnsupportedModuleDevError(
+            moduleName,
+            importStatement,
+            await res.text()
+          )
+        }
+      )
 
       it('throws unsupported module error in production at runtime and prints error on logs', async () => {
         const { stderr } = await nextBuild(context.appDir, undefined, {
@@ -261,12 +302,12 @@ describe('Edge runtime code with imports', () => {
       init(importStatement) {
         context.api.write(`
           ${importStatement}
-  
+
           export default async function handler(request) {
             new Unknown()
             return Response.json({ ok: true })
           }
-  
+
           export const config = { runtime: 'experimental-edge' }
         `)
       },
@@ -278,7 +319,7 @@ describe('Edge runtime code with imports', () => {
         context.middleware.write(`
           import { NextResponse } from 'next/server'
           ${importStatement}
-  
+
           export async function middleware(request) {
             new Unknown()
             return NextResponse.next()
@@ -292,16 +333,31 @@ describe('Edge runtime code with imports', () => {
 
     beforeEach(() => init(importStatement))
 
-    it('throws not-found module error in dev at runtime and highlights the faulty line', async () => {
-      context.app = await launchApp(context.appDir, context.appPort, appOption)
-      const res = await fetchViaHTTP(context.appPort, url)
-      expect(res.status).toBe(500)
-      expectModuleNotFoundDevError(
-        moduleName,
-        importStatement,
-        await res.text()
-      )
-    })
+    it.each([
+      ['dev', false],
+      ['turbo', true],
+    ])(
+      'throws not-found module error in %s at runtime and highlights the faulty line',
+      async (_name, turbo) => {
+        if (!!turbo && !shouldRunTurboDev) {
+          return
+        }
+
+        context.app = await launchApp(
+          context.appDir,
+          context.appPort,
+          appOption,
+          { turbo: !!turbo }
+        )
+        const res = await fetchViaHTTP(context.appPort, url)
+        expect(res.status).toBe(500)
+        expectModuleNotFoundDevError(
+          moduleName,
+          importStatement,
+          await res.text()
+        )
+      }
+    )
 
     it('does not build and reports', async () => {
       const { code, stderr } = await nextBuild(context.appDir, undefined, {
@@ -324,7 +380,7 @@ describe('Edge runtime code with imports', () => {
             new (${importStatement})()
             return Response.json({ ok: true })
           }
-  
+
           export const config = { runtime: 'experimental-edge' }
         `)
       },
@@ -335,7 +391,7 @@ describe('Edge runtime code with imports', () => {
       init(importStatement) {
         context.middleware.write(`
           import { NextResponse } from 'next/server'
-  
+
           export async function middleware(request) {
             new (${importStatement})()
             return NextResponse.next()
@@ -349,16 +405,31 @@ describe('Edge runtime code with imports', () => {
 
     beforeEach(() => init(importStatement))
 
-    it('throws not-found module error in dev at runtime and highlights the faulty line', async () => {
-      context.app = await launchApp(context.appDir, context.appPort, appOption)
-      const res = await fetchViaHTTP(context.appPort, url)
-      expect(res.status).toBe(500)
-      expectModuleNotFoundDevError(
-        moduleName,
-        importStatement,
-        await res.text()
-      )
-    })
+    it.each([
+      ['dev', false],
+      ['turbo', true],
+    ])(
+      'throws not-found module error in %s at runtime and highlights the faulty line',
+      async (_name, turbo) => {
+        if (!!turbo && !shouldRunTurboDev) {
+          return
+        }
+
+        context.app = await launchApp(
+          context.appDir,
+          context.appPort,
+          appOption,
+          { turbo: !!turbo }
+        )
+        const res = await fetchViaHTTP(context.appPort, url)
+        expect(res.status).toBe(500)
+        expectModuleNotFoundDevError(
+          moduleName,
+          importStatement,
+          await res.text()
+        )
+      }
+    )
 
     it('does not build and reports module not found error', async () => {
       const { code, stderr } = await nextBuild(context.appDir, undefined, {
@@ -383,7 +454,7 @@ describe('Edge runtime code with imports', () => {
             }
             return Response.json({ ok: true })
           }
-  
+
           export const config = { runtime: 'experimental-edge' }
         `)
       },
@@ -394,7 +465,7 @@ describe('Edge runtime code with imports', () => {
       init(importStatement) {
         context.middleware.write(`
           import { NextResponse } from 'next/server'
-  
+
           export async function middleware(request) {
             if (process.env === 'production') {
               new (${importStatement})()
@@ -410,16 +481,31 @@ describe('Edge runtime code with imports', () => {
 
     beforeEach(() => init(importStatement))
 
-    it('throws not-found module error in dev at runtime and highlights the faulty line', async () => {
-      context.app = await launchApp(context.appDir, context.appPort, appOption)
-      const res = await fetchViaHTTP(context.appPort, url)
-      expect(res.status).toBe(500)
-      expectModuleNotFoundDevError(
-        moduleName,
-        importStatement,
-        await res.text()
-      )
-    })
+    it.each([
+      ['dev', false],
+      ['turbo', true],
+    ])(
+      'throws not-found module error in %s at runtime and highlights the faulty line',
+      async (_name, turbo) => {
+        if (!!turbo && !shouldRunTurboDev) {
+          return
+        }
+
+        context.app = await launchApp(
+          context.appDir,
+          context.appPort,
+          appOption,
+          { turbo: !!turbo }
+        )
+        const res = await fetchViaHTTP(context.appPort, url)
+        expect(res.status).toBe(500)
+        expectModuleNotFoundDevError(
+          moduleName,
+          importStatement,
+          await res.text()
+        )
+      }
+    )
 
     it('does not build and reports module not found error', async () => {
       const { code, stderr } = await nextBuild(context.appDir, undefined, {
@@ -444,7 +530,7 @@ describe('Edge runtime code with imports', () => {
             }
             return Response.json({ ok: true })
           }
-  
+
           export const config = { runtime: 'experimental-edge' }
         `)
       },
@@ -455,7 +541,7 @@ describe('Edge runtime code with imports', () => {
       init(importStatement) {
         context.middleware.write(`
           import { NextResponse } from 'next/server'
-  
+
           export async function middleware(request) {
             if (process.env === 'production') {
               (${importStatement}).spawn('ls', ['-lh', '/usr'])
@@ -471,8 +557,20 @@ describe('Edge runtime code with imports', () => {
 
     beforeEach(() => init(importStatement))
 
-    it('does not throw in dev at runtime', async () => {
-      context.app = await launchApp(context.appDir, context.appPort, appOption)
+    it.each([
+      ['dev', false],
+      ['turbo', true],
+    ])('does not throw in %s at runtime', async (_name, turbo) => {
+      if (!!turbo && !shouldRunTurboDev) {
+        return
+      }
+
+      context.app = await launchApp(
+        context.appDir,
+        context.appPort,
+        appOption,
+        { turbo: !!turbo }
+      )
       const res = await fetchViaHTTP(context.appPort, url)
       expect(res.status).toBe(200)
       expectNoError(moduleName)
@@ -502,7 +600,7 @@ describe('Edge runtime code with imports', () => {
             response.headers.set('x-from-runtime', nanoid())
             return response
           }
-  
+
           export const config = { runtime: 'experimental-edge' }
         `)
       },
@@ -529,8 +627,20 @@ describe('Edge runtime code with imports', () => {
 
     beforeEach(() => init(importStatement))
 
-    it('does not throw in dev at runtime', async () => {
-      context.app = await launchApp(context.appDir, context.appPort, appOption)
+    it.each([
+      ['dev', false],
+      ['turbo', true],
+    ])('does not throw in %s at runtime', async (_name, turbo) => {
+      if (!!turbo && !shouldRunTurboDev) {
+        return
+      }
+
+      context.app = await launchApp(
+        context.appDir,
+        context.appPort,
+        appOption,
+        { turbo: !!turbo }
+      )
       const res = await fetchViaHTTP(context.appPort, url)
       expect(res.status).toBe(200)
       expect(res.headers.get('x-from-runtime')).toBeDefined()
@@ -563,7 +673,7 @@ describe('Edge runtime code with imports', () => {
             response.headers.set('x-from-runtime', Buffer.isBuffer('a string'))
             return response
           }
-  
+
           export const config = { runtime: 'experimental-edge' }
         `)
       },
@@ -590,8 +700,20 @@ describe('Edge runtime code with imports', () => {
 
     beforeEach(() => init(importStatement))
 
-    it('does not throw in dev at runtime', async () => {
-      context.app = await launchApp(context.appDir, context.appPort, appOption)
+    it.each([
+      ['dev', false],
+      ['turbo', true],
+    ])('does not throw in %s at runtime', async (_name, turbo) => {
+      if (!!turbo && !shouldRunTurboDev) {
+        return
+      }
+
+      context.app = await launchApp(
+        context.appDir,
+        context.appPort,
+        appOption,
+        { turbo: !!turbo }
+      )
       const res = await fetchViaHTTP(context.appPort, url)
       expect(res.status).toBe(200)
       expect(res.headers.get('x-from-runtime')).toBe('false')

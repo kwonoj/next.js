@@ -11,10 +11,12 @@ import {
   launchApp,
   nextBuild,
   nextStart,
+  shouldRunTurboDevTest,
 } from 'next-test-utils'
 
 jest.setTimeout(1000 * 60 * 2)
 
+const shouldRunTurboDev = shouldRunTurboDevTest()
 const context = {
   appDir: join(__dirname, '../'),
   logs: { output: '', stdout: '', stderr: '' },
@@ -64,8 +66,20 @@ describe('Edge runtime code with imports', () => {
       url: middlewareUrl,
     },
   ])('test error if response is not Response type', ({ title, url }) => {
-    it(`${title} dev test Response`, async () => {
-      context.app = await launchApp(context.appDir, context.appPort, appOption)
+    it.each([
+      ['dev', false],
+      ['turbo', true],
+    ])(`${title} %s test Response`, async (_name, turbo) => {
+      if (!!turbo && !shouldRunTurboDev) {
+        return
+      }
+
+      context.app = await launchApp(
+        context.appDir,
+        context.appPort,
+        appOption,
+        { turbo: !!turbo }
+      )
       const res = await fetchViaHTTP(context.appPort, url)
       expect(context.logs.stderr).toContain(
         'Expected an instance of Response to be returned'

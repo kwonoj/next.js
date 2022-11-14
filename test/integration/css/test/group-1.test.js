@@ -12,10 +12,12 @@ import {
   nextStart,
   renderViaHTTP,
   waitFor,
+  shouldRunTurboDevTest,
 } from 'next-test-utils'
 import webdriver from 'next-webdriver'
 import { join } from 'path'
 
+const shouldRunTurboDev = shouldRunTurboDevTest()
 const fixturesDir = join(__dirname, '../..', 'css-fixtures')
 
 describe('CSS Support', () => {
@@ -271,7 +273,14 @@ describe('CSS Support', () => {
     })
   })
 
-  describe('React Lifecyce Order (dev)', () => {
+  describe.each([
+    ['dev', false],
+    ['turbo', true],
+  ])('React Lifecyce Order (%s)', (_name, turbo) => {
+    if (!!turbo && !shouldRunTurboDev) {
+      return
+    }
+
     const appDir = join(fixturesDir, 'transition-react')
     beforeAll(async () => {
       await remove(join(appDir, '.next'))
@@ -281,7 +290,7 @@ describe('CSS Support', () => {
     let app
     beforeAll(async () => {
       appPort = await findPort()
-      app = await launchApp(appDir, appPort)
+      app = await launchApp(appDir, appPort, { turbo })
     })
     afterAll(async () => {
       await killApp(app)
@@ -458,7 +467,14 @@ describe('CSS Support', () => {
     })
   })
 
-  describe('Can hot reload CSS without losing state', () => {
+  describe.each([
+    ['dev', false],
+    ['turbo', true],
+  ])('Can hot reload CSS without losing state %s', (_name, turbo) => {
+    if (!!turbo && !shouldRunTurboDev) {
+      return
+    }
+
     const appDir = join(fixturesDir, 'multi-page')
 
     beforeAll(async () => {
@@ -469,7 +485,7 @@ describe('CSS Support', () => {
     let app
     beforeAll(async () => {
       appPort = await findPort()
-      app = await launchApp(appDir, appPort)
+      app = await launchApp(appDir, appPort, { turbo })
     })
     afterAll(async () => {
       await killApp(app)
@@ -518,7 +534,14 @@ describe('CSS Support', () => {
     })
   })
 
-  describe('Has CSS in computed styles in Development', () => {
+  describe.each([
+    ['dev', false],
+    ['turbo', true],
+  ])('Has CSS in computed styles in %s', (_name, turbo) => {
+    if (!!turbo && !shouldRunTurboDev) {
+      return
+    }
+
     const appDir = join(fixturesDir, 'multi-page')
 
     beforeAll(async () => {
@@ -529,7 +552,7 @@ describe('CSS Support', () => {
     let app
     beforeAll(async () => {
       appPort = await findPort()
-      app = await launchApp(appDir, appPort)
+      app = await launchApp(appDir, appPort, { turbo })
     })
     afterAll(async () => {
       await killApp(app)
@@ -552,7 +575,14 @@ describe('CSS Support', () => {
     })
   })
 
-  describe('Body is not hidden when unused in Development', () => {
+  describe.each([
+    ['dev', false],
+    ['turbo', true],
+  ])('Body is not hidden when unused in %s', (_name, turbo) => {
+    if (!!turbo && !shouldRunTurboDev) {
+      return
+    }
+
     const appDir = join(fixturesDir, 'unused')
 
     beforeAll(async () => {
@@ -563,7 +593,7 @@ describe('CSS Support', () => {
     let app
     beforeAll(async () => {
       appPort = await findPort()
-      app = await launchApp(appDir, appPort)
+      app = await launchApp(appDir, appPort, { turbo })
     })
     afterAll(async () => {
       await killApp(app)
@@ -585,7 +615,14 @@ describe('CSS Support', () => {
     })
   })
 
-  describe('Body is not hidden when broken in Development', () => {
+  describe.each([
+    ['dev', false],
+    ['turbo', true],
+  ])('Body is not hidden when broken in %s', (_name, turbo) => {
+    if (!!turbo && !shouldRunTurboDev) {
+      return
+    }
+
     const appDir = join(fixturesDir, 'unused')
 
     let appPort
@@ -593,13 +630,13 @@ describe('CSS Support', () => {
     beforeAll(async () => {
       await remove(join(appDir, '.next'))
       appPort = await findPort()
-      app = await launchApp(appDir, appPort)
+      app = await launchApp(appDir, appPort, { turbo })
     })
     afterAll(async () => {
       await killApp(app)
     })
 
-    it('should have body visible', async () => {
+    it('should have body visible %s', async () => {
       const pageFile = new File(join(appDir, 'pages/index.js'))
       let browser
       try {

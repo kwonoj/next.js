@@ -9,10 +9,12 @@ import {
   nextBuild,
   nextStart,
   waitFor,
+  shouldRunTurboDevTest,
 } from 'next-test-utils'
 import { join } from 'path'
 import { cleanImagesDir, expectWidth, fsToJson, runTests } from './util'
 
+const shouldRunTurboDev = shouldRunTurboDevTest()
 const appDir = join(__dirname, '../app')
 const imagesDir = join(appDir, '.next', 'cache', 'images')
 const nextConfig = new File(join(appDir, 'next.config.js'))
@@ -22,109 +24,160 @@ describe('Image Optimizer', () => {
   describe('config checks', () => {
     let app
 
-    it('should error when domains length exceeds 50', async () => {
-      await nextConfig.replace(
-        '{ /* replaceme */ }',
-        JSON.stringify({
-          images: {
-            domains: new Array(51).fill('google.com'),
+    it.each([
+      ['dev', false],
+      ['turbo', true],
+    ])(
+      'should error when domains length exceeds 50 %s',
+      async (_name, turbo) => {
+        if (!!turbo && !shouldRunTurboDev) {
+          return
+        }
+
+        await nextConfig.replace(
+          '{ /* replaceme */ }',
+          JSON.stringify({
+            images: {
+              domains: new Array(51).fill('google.com'),
+            },
+          })
+        )
+        let stderr = ''
+
+        app = await launchApp(appDir, await findPort(), {
+          turbo: !!turbo,
+          onStderr(msg) {
+            stderr += msg || ''
           },
         })
-      )
-      let stderr = ''
+        await waitFor(1000)
+        await killApp(app).catch(() => {})
+        await nextConfig.restore()
 
-      app = await launchApp(appDir, await findPort(), {
-        onStderr(msg) {
-          stderr += msg || ''
-        },
-      })
-      await waitFor(1000)
-      await killApp(app).catch(() => {})
-      await nextConfig.restore()
+        expect(stderr).toContain(
+          'Specified images.domains exceeds length of 50, received length (51), please reduce the length of the array to continue'
+        )
+      }
+    )
 
-      expect(stderr).toContain(
-        'Specified images.domains exceeds length of 50, received length (51), please reduce the length of the array to continue'
-      )
-    })
+    it.each([
+      ['dev', false],
+      ['turbo', true],
+    ])(
+      'should error when remotePatterns length exceeds 50 %s',
+      async (_name, turbo) => {
+        if (!!turbo && !shouldRunTurboDev) {
+          return
+        }
 
-    it('should error when remotePatterns length exceeds 50', async () => {
-      await nextConfig.replace(
-        '{ /* replaceme */ }',
-        JSON.stringify({
-          images: {
-            remotePatterns: Array.from({ length: 51 }).map((_) => ({
-              hostname: 'example.com',
-            })),
+        await nextConfig.replace(
+          '{ /* replaceme */ }',
+          JSON.stringify({
+            images: {
+              remotePatterns: Array.from({ length: 51 }).map((_) => ({
+                hostname: 'example.com',
+              })),
+            },
+          })
+        )
+        let stderr = ''
+
+        app = await launchApp(appDir, await findPort(), {
+          turbo: !!turbo,
+          onStderr(msg) {
+            stderr += msg || ''
           },
         })
-      )
-      let stderr = ''
+        await waitFor(1000)
+        await killApp(app).catch(() => {})
+        await nextConfig.restore()
 
-      app = await launchApp(appDir, await findPort(), {
-        onStderr(msg) {
-          stderr += msg || ''
-        },
-      })
-      await waitFor(1000)
-      await killApp(app).catch(() => {})
-      await nextConfig.restore()
+        expect(stderr).toContain(
+          'Specified images.remotePatterns exceeds length of 50, received length (51), please reduce the length of the array to continue'
+        )
+      }
+    )
 
-      expect(stderr).toContain(
-        'Specified images.remotePatterns exceeds length of 50, received length (51), please reduce the length of the array to continue'
-      )
-    })
+    it.each([
+      ['dev', false],
+      ['turbo', true],
+    ])(
+      'should error when remotePatterns has invalid prop %s',
+      async (_name, turbo) => {
+        if (!!turbo && !shouldRunTurboDev) {
+          return
+        }
 
-    it('should error when remotePatterns has invalid prop', async () => {
-      await nextConfig.replace(
-        '{ /* replaceme */ }',
-        JSON.stringify({
-          images: {
-            remotePatterns: [{ hostname: 'example.com', foo: 'bar' }],
+        await nextConfig.replace(
+          '{ /* replaceme */ }',
+          JSON.stringify({
+            images: {
+              remotePatterns: [{ hostname: 'example.com', foo: 'bar' }],
+            },
+          })
+        )
+        let stderr = ''
+
+        app = await launchApp(appDir, await findPort(), {
+          turbo: !!turbo,
+          onStderr(msg) {
+            stderr += msg || ''
           },
         })
-      )
-      let stderr = ''
+        await waitFor(1000)
+        await killApp(app).catch(() => {})
+        await nextConfig.restore()
 
-      app = await launchApp(appDir, await findPort(), {
-        onStderr(msg) {
-          stderr += msg || ''
-        },
-      })
-      await waitFor(1000)
-      await killApp(app).catch(() => {})
-      await nextConfig.restore()
+        expect(stderr).toContain(
+          'Invalid images.remotePatterns values:\n{"hostname":"example.com","foo":"bar"}'
+        )
+      }
+    )
 
-      expect(stderr).toContain(
-        'Invalid images.remotePatterns values:\n{"hostname":"example.com","foo":"bar"}'
-      )
-    })
+    it.each([
+      ['dev', false],
+      ['turbo', true],
+    ])(
+      'should error when remotePatterns is missing hostname',
+      async (_name, turbo) => {
+        if (!!turbo && !shouldRunTurboDev) {
+          return
+        }
 
-    it('should error when remotePatterns is missing hostname', async () => {
-      await nextConfig.replace(
-        '{ /* replaceme */ }',
-        JSON.stringify({
-          images: {
-            remotePatterns: [{ protocol: 'https' }],
+        await nextConfig.replace(
+          '{ /* replaceme */ }',
+          JSON.stringify({
+            images: {
+              remotePatterns: [{ protocol: 'https' }],
+            },
+          })
+        )
+        let stderr = ''
+
+        app = await launchApp(appDir, await findPort(), {
+          turbo: !!turbo,
+          onStderr(msg) {
+            stderr += msg || ''
           },
         })
-      )
-      let stderr = ''
+        await waitFor(1000)
+        await killApp(app).catch(() => {})
+        await nextConfig.restore()
 
-      app = await launchApp(appDir, await findPort(), {
-        onStderr(msg) {
-          stderr += msg || ''
-        },
-      })
-      await waitFor(1000)
-      await killApp(app).catch(() => {})
-      await nextConfig.restore()
+        expect(stderr).toContain(
+          'Invalid images.remotePatterns values:\n{"protocol":"https"}'
+        )
+      }
+    )
 
-      expect(stderr).toContain(
-        'Invalid images.remotePatterns values:\n{"protocol":"https"}'
-      )
-    })
+    it.each([
+      ['dev', false],
+      ['turbo', true],
+    ])('should error when sizes length exceeds 25 %s', async (_name, turbo) => {
+      if (!!turbo && !shouldRunTurboDev) {
+        return
+      }
 
-    it('should error when sizes length exceeds 25', async () => {
       await nextConfig.replace(
         '{ /* replaceme */ }',
         JSON.stringify({
@@ -136,6 +189,7 @@ describe('Image Optimizer', () => {
       let stderr = ''
 
       app = await launchApp(appDir, await findPort(), {
+        turbo: !!turbo,
         onStderr(msg) {
           stderr += msg || ''
         },
@@ -149,230 +203,331 @@ describe('Image Optimizer', () => {
       )
     })
 
-    it('should error when deviceSizes contains invalid widths', async () => {
-      await nextConfig.replace(
-        '{ /* replaceme */ }',
-        JSON.stringify({
-          images: {
-            deviceSizes: [0, 12000, 64, 128, 256],
+    it.each([
+      ['dev', false],
+      ['turbo', true],
+    ])(
+      'should error when deviceSizes contains invalid widths',
+      async (_name, turbo) => {
+        if (!!turbo && !shouldRunTurboDev) {
+          return
+        }
+
+        await nextConfig.replace(
+          '{ /* replaceme */ }',
+          JSON.stringify({
+            images: {
+              deviceSizes: [0, 12000, 64, 128, 256],
+            },
+          })
+        )
+        let stderr = ''
+
+        app = await launchApp(appDir, await findPort(), {
+          turbo: !!turbo,
+          onStderr(msg) {
+            stderr += msg || ''
           },
         })
-      )
-      let stderr = ''
+        await waitFor(1000)
+        await killApp(app).catch(() => {})
+        await nextConfig.restore()
 
-      app = await launchApp(appDir, await findPort(), {
-        onStderr(msg) {
-          stderr += msg || ''
-        },
-      })
-      await waitFor(1000)
-      await killApp(app).catch(() => {})
-      await nextConfig.restore()
+        expect(stderr).toContain(
+          'Specified images.deviceSizes should be an Array of numbers that are between 1 and 10000, received invalid values (0, 12000)'
+        )
+      }
+    )
 
-      expect(stderr).toContain(
-        'Specified images.deviceSizes should be an Array of numbers that are between 1 and 10000, received invalid values (0, 12000)'
-      )
-    })
+    it.each([
+      ['dev', false],
+      ['turbo', true],
+    ])(
+      'should error when imageSizes contains invalid widths',
+      async (_name, turbo) => {
+        if (!!turbo && !shouldRunTurboDev) {
+          return
+        }
 
-    it('should error when imageSizes contains invalid widths', async () => {
-      await nextConfig.replace(
-        '{ /* replaceme */ }',
-        JSON.stringify({
-          images: {
-            imageSizes: [0, 16, 64, 12000],
+        await nextConfig.replace(
+          '{ /* replaceme */ }',
+          JSON.stringify({
+            images: {
+              imageSizes: [0, 16, 64, 12000],
+            },
+          })
+        )
+        let stderr = ''
+
+        app = await launchApp(appDir, await findPort(), {
+          turbo: !!turbo,
+          onStderr(msg) {
+            stderr += msg || ''
           },
         })
-      )
-      let stderr = ''
+        await waitFor(1000)
+        await killApp(app).catch(() => {})
+        await nextConfig.restore()
 
-      app = await launchApp(appDir, await findPort(), {
-        onStderr(msg) {
-          stderr += msg || ''
-        },
-      })
-      await waitFor(1000)
-      await killApp(app).catch(() => {})
-      await nextConfig.restore()
+        expect(stderr).toContain(
+          'Specified images.imageSizes should be an Array of numbers that are between 1 and 10000, received invalid values (0, 12000)'
+        )
+      }
+    )
 
-      expect(stderr).toContain(
-        'Specified images.imageSizes should be an Array of numbers that are between 1 and 10000, received invalid values (0, 12000)'
-      )
-    })
+    it.each([
+      ['dev', false],
+      ['turbo', true],
+    ])(
+      'should error when loader contains invalid value',
+      async (_name, turbo) => {
+        if (!!turbo && !shouldRunTurboDev) {
+          return
+        }
 
-    it('should error when loader contains invalid value', async () => {
-      await nextConfig.replace(
-        '{ /* replaceme */ }',
-        JSON.stringify({
-          images: {
-            loader: 'notreal',
+        await nextConfig.replace(
+          '{ /* replaceme */ }',
+          JSON.stringify({
+            images: {
+              loader: 'notreal',
+            },
+          })
+        )
+        let stderr = ''
+
+        app = await launchApp(appDir, await findPort(), {
+          turbo: !!turbo,
+          onStderr(msg) {
+            stderr += msg || ''
           },
         })
-      )
-      let stderr = ''
+        await waitFor(1000)
+        await killApp(app).catch(() => {})
+        await nextConfig.restore()
 
-      app = await launchApp(appDir, await findPort(), {
-        onStderr(msg) {
-          stderr += msg || ''
-        },
-      })
-      await waitFor(1000)
-      await killApp(app).catch(() => {})
-      await nextConfig.restore()
+        expect(stderr).toContain(
+          'Specified images.loader should be one of (default, imgix, cloudinary, akamai, custom), received invalid value (notreal)'
+        )
+      }
+    )
 
-      expect(stderr).toContain(
-        'Specified images.loader should be one of (default, imgix, cloudinary, akamai, custom), received invalid value (notreal)'
-      )
-    })
+    it.each([
+      ['dev', false],
+      ['turbo', true],
+    ])(
+      'should error when images.formats contains invalid values',
+      async (_name, turbo) => {
+        if (!!turbo && !shouldRunTurboDev) {
+          return
+        }
 
-    it('should error when images.formats contains invalid values', async () => {
-      await nextConfig.replace(
-        '{ /* replaceme */ }',
-        JSON.stringify({
-          images: {
-            formats: ['image/avif', 'jpeg'],
+        await nextConfig.replace(
+          '{ /* replaceme */ }',
+          JSON.stringify({
+            images: {
+              formats: ['image/avif', 'jpeg'],
+            },
+          })
+        )
+        let stderr = ''
+
+        app = await launchApp(appDir, await findPort(), {
+          turbo: !!turbo,
+          onStderr(msg) {
+            stderr += msg || ''
           },
         })
-      )
-      let stderr = ''
+        await waitFor(1000)
+        await killApp(app).catch(() => {})
+        await nextConfig.restore()
 
-      app = await launchApp(appDir, await findPort(), {
-        onStderr(msg) {
-          stderr += msg || ''
-        },
-      })
-      await waitFor(1000)
-      await killApp(app).catch(() => {})
-      await nextConfig.restore()
+        expect(stderr).toContain(
+          `Specified images.formats should be an Array of mime type strings, received invalid values (jpeg)`
+        )
+      }
+    )
 
-      expect(stderr).toContain(
-        `Specified images.formats should be an Array of mime type strings, received invalid values (jpeg)`
-      )
-    })
+    it.each([
+      ['dev', false],
+      ['turbo', true],
+    ])(
+      'should error when images.loader is assigned but images.path is not',
+      async (_name, turbo) => {
+        if (!!turbo && !shouldRunTurboDev) {
+          return
+        }
 
-    it('should error when images.loader is assigned but images.path is not', async () => {
-      await nextConfig.replace(
-        '{ /* replaceme */ }',
-        JSON.stringify({
-          images: {
-            loader: 'imgix',
+        await nextConfig.replace(
+          '{ /* replaceme */ }',
+          JSON.stringify({
+            images: {
+              loader: 'imgix',
+            },
+          })
+        )
+        let stderr = ''
+
+        app = await launchApp(appDir, await findPort(), {
+          turbo: !!turbo,
+          onStderr(msg) {
+            stderr += msg || ''
           },
         })
-      )
-      let stderr = ''
+        await waitFor(1000)
+        await killApp(app).catch(() => {})
+        await nextConfig.restore()
 
-      app = await launchApp(appDir, await findPort(), {
-        onStderr(msg) {
-          stderr += msg || ''
-        },
-      })
-      await waitFor(1000)
-      await killApp(app).catch(() => {})
-      await nextConfig.restore()
+        expect(stderr).toContain(
+          `Specified images.loader property (imgix) also requires images.path property to be assigned to a URL prefix.`
+        )
+      }
+    )
 
-      expect(stderr).toContain(
-        `Specified images.loader property (imgix) also requires images.path property to be assigned to a URL prefix.`
-      )
-    })
+    it.each([
+      ['dev', false],
+      ['turbo', true],
+    ])(
+      'should error when images.loader and images.loaderFile are both assigned',
+      async (_name, turbo) => {
+        if (!!turbo && !shouldRunTurboDev) {
+          return
+        }
 
-    it('should error when images.loader and images.loaderFile are both assigned', async () => {
-      await nextConfig.replace(
-        '{ /* replaceme */ }',
-        JSON.stringify({
-          images: {
-            loader: 'imgix',
-            path: 'https://example.com',
-            loaderFile: './dummy.js',
+        await nextConfig.replace(
+          '{ /* replaceme */ }',
+          JSON.stringify({
+            images: {
+              loader: 'imgix',
+              path: 'https://example.com',
+              loaderFile: './dummy.js',
+            },
+          })
+        )
+        let stderr = ''
+
+        app = await launchApp(appDir, await findPort(), {
+          turbo: !!turbo,
+          onStderr(msg) {
+            stderr += msg || ''
           },
         })
-      )
-      let stderr = ''
+        await waitFor(1000)
+        await killApp(app).catch(() => {})
+        await nextConfig.restore()
 
-      app = await launchApp(appDir, await findPort(), {
-        onStderr(msg) {
-          stderr += msg || ''
-        },
-      })
-      await waitFor(1000)
-      await killApp(app).catch(() => {})
-      await nextConfig.restore()
+        expect(stderr).toContain(
+          `Specified images.loader property (imgix) cannot be used with images.loaderFile property. Please set images.loader to "custom".`
+        )
+      }
+    )
 
-      expect(stderr).toContain(
-        `Specified images.loader property (imgix) cannot be used with images.loaderFile property. Please set images.loader to "custom".`
-      )
-    })
+    it.each([
+      ['dev', false],
+      ['turbo', true],
+    ])(
+      'should error when images.loaderFile does not exist',
+      async (_name, turbo) => {
+        if (!!turbo && !shouldRunTurboDev) {
+          return
+        }
 
-    it('should error when images.loaderFile does not exist', async () => {
-      await nextConfig.replace(
-        '{ /* replaceme */ }',
-        JSON.stringify({
-          images: {
-            loaderFile: './fakefile.js',
+        await nextConfig.replace(
+          '{ /* replaceme */ }',
+          JSON.stringify({
+            images: {
+              loaderFile: './fakefile.js',
+            },
+          })
+        )
+        let stderr = ''
+
+        app = await launchApp(appDir, await findPort(), {
+          turbo: !!turbo,
+          onStderr(msg) {
+            stderr += msg || ''
           },
         })
-      )
-      let stderr = ''
+        await waitFor(1000)
+        await killApp(app).catch(() => {})
+        await nextConfig.restore()
 
-      app = await launchApp(appDir, await findPort(), {
-        onStderr(msg) {
-          stderr += msg || ''
-        },
-      })
-      await waitFor(1000)
-      await killApp(app).catch(() => {})
-      await nextConfig.restore()
+        expect(stderr).toContain(
+          `Specified images.loaderFile does not exist at`
+        )
+      }
+    )
 
-      expect(stderr).toContain(`Specified images.loaderFile does not exist at`)
-    })
+    it.each([
+      ['dev', false],
+      ['turbo', true],
+    ])(
+      'should error when images.dangerouslyAllowSVG is not a boolean',
+      async (_name, turbo) => {
+        if (!!turbo && !shouldRunTurboDev) {
+          return
+        }
 
-    it('should error when images.dangerouslyAllowSVG is not a boolean', async () => {
-      await nextConfig.replace(
-        '{ /* replaceme */ }',
-        JSON.stringify({
-          images: {
-            dangerouslyAllowSVG: 'foo',
+        await nextConfig.replace(
+          '{ /* replaceme */ }',
+          JSON.stringify({
+            images: {
+              dangerouslyAllowSVG: 'foo',
+            },
+          })
+        )
+        let stderr = ''
+
+        app = await launchApp(appDir, await findPort(), {
+          turbo: !!turbo,
+          onStderr(msg) {
+            stderr += msg || ''
           },
         })
-      )
-      let stderr = ''
+        await waitFor(1000)
+        await killApp(app).catch(() => {})
+        await nextConfig.restore()
 
-      app = await launchApp(appDir, await findPort(), {
-        onStderr(msg) {
-          stderr += msg || ''
-        },
-      })
-      await waitFor(1000)
-      await killApp(app).catch(() => {})
-      await nextConfig.restore()
+        expect(stderr).toContain(
+          `Specified images.dangerouslyAllowSVG should be a boolean`
+        )
+      }
+    )
 
-      expect(stderr).toContain(
-        `Specified images.dangerouslyAllowSVG should be a boolean`
-      )
-    })
+    it.each([
+      ['dev', false],
+      ['turbo', true],
+    ])(
+      'should error when images.contentSecurityPolicy is not a string',
+      async (_name, turbo) => {
+        if (!!turbo && !shouldRunTurboDev) {
+          return
+        }
 
-    it('should error when images.contentSecurityPolicy is not a string', async () => {
-      await nextConfig.replace(
-        '{ /* replaceme */ }',
-        JSON.stringify({
-          images: {
-            contentSecurityPolicy: 1,
+        await nextConfig.replace(
+          '{ /* replaceme */ }',
+          JSON.stringify({
+            images: {
+              contentSecurityPolicy: 1,
+            },
+          })
+        )
+        let stderr = ''
+
+        app = await launchApp(appDir, await findPort(), {
+          turbo: !!turbo,
+          onStderr(msg) {
+            stderr += msg || ''
           },
         })
-      )
-      let stderr = ''
+        await waitFor(1000)
+        await killApp(app).catch(() => {})
+        await nextConfig.restore()
 
-      app = await launchApp(appDir, await findPort(), {
-        onStderr(msg) {
-          stderr += msg || ''
-        },
-      })
-      await waitFor(1000)
-      await killApp(app).catch(() => {})
-      await nextConfig.restore()
-
-      expect(stderr).toContain(
-        `Specified images.contentSecurityPolicy should be a string`
-      )
-    })
+        expect(stderr).toContain(
+          `Specified images.contentSecurityPolicy should be a string`
+        )
+      }
+    )
   })
 
   // domains for testing
@@ -426,31 +581,41 @@ describe('Image Optimizer', () => {
     runTests(ctx)
   })
 
-  describe('Server support for trailingSlash in next.config.js', () => {
-    let app
-    let appPort
-    beforeAll(async () => {
-      nextConfig.replace(
-        '{ /* replaceme */ }',
-        JSON.stringify({
-          trailingSlash: true,
-        })
-      )
-      appPort = await findPort()
-      app = await launchApp(appDir, appPort)
-    })
-    afterAll(async () => {
-      await killApp(app)
-      nextConfig.restore()
-    })
+  describe.each([
+    ['dev', false],
+    ['turbo', true],
+  ])(
+    'Server support for trailingSlash in next.config.js %s',
+    (_name, turbo) => {
+      if (!!turbo && !shouldRunTurboDev) {
+        return
+      }
 
-    it('should return successful response for original loader', async () => {
-      let res
-      const query = { url: '/test.png', w: 8, q: 70 }
-      res = await fetchViaHTTP(appPort, '/_next/image/', query)
-      expect(res.status).toBe(200)
-    })
-  })
+      let app
+      let appPort
+      beforeAll(async () => {
+        nextConfig.replace(
+          '{ /* replaceme */ }',
+          JSON.stringify({
+            trailingSlash: true,
+          })
+        )
+        appPort = await findPort()
+        app = await launchApp(appDir, appPort, { turbo })
+      })
+      afterAll(async () => {
+        await killApp(app)
+        nextConfig.restore()
+      })
+
+      it('should return successful response for original loader', async () => {
+        let res
+        const query = { url: '/test.png', w: 8, q: 70 }
+        res = await fetchViaHTTP(appPort, '/_next/image/', query)
+        expect(res.status).toBe(200)
+      })
+    }
+  )
 
   describe('Server support for headers in next.config.js', () => {
     const size = 96 // defaults defined in server/config.ts
@@ -529,7 +694,14 @@ describe('Image Optimizer', () => {
     })
   })
 
-  describe('dev support next.config.js cloudinary loader', () => {
+  describe.each([
+    ['dev', false],
+    ['turbo', true],
+  ])('%s support next.config.js cloudinary loader', (_name, turbo) => {
+    if (!!turbo && !shouldRunTurboDev) {
+      return
+    }
+
     let app
     let appPort
 
@@ -543,7 +715,7 @@ describe('Image Optimizer', () => {
       nextConfig.replace('{ /* replaceme */ }', json)
       await cleanImagesDir({ imagesDir })
       appPort = await findPort()
-      app = await launchApp(appDir, appPort)
+      app = await launchApp(appDir, appPort, { turbo })
     })
     afterAll(async () => {
       await killApp(app)
@@ -619,7 +791,14 @@ describe('Image Optimizer', () => {
     })
   })
 
-  describe('dev support for dynamic blur placeholder', () => {
+  describe.each([
+    ['dev', false],
+    ['turbo', true],
+  ])('%s support for dynamic blur placeholder', (_name, turbo) => {
+    if (!!turbo && !shouldRunTurboDev) {
+      return
+    }
+
     let app
     let appPort
     beforeAll(async () => {
@@ -632,7 +811,7 @@ describe('Image Optimizer', () => {
       nextConfig.replace('{ /* replaceme */ }', json)
       await cleanImagesDir({ imagesDir })
       appPort = await findPort()
-      app = await launchApp(appDir, appPort)
+      app = await launchApp(appDir, appPort, { turbo })
     })
     afterAll(async () => {
       await killApp(app)

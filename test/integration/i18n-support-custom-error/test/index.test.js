@@ -8,8 +8,10 @@ import {
   findPort,
   nextBuild,
   nextStart,
+  shouldRunTurboDevTest,
 } from 'next-test-utils'
 
+const shouldRunTurboDev = shouldRunTurboDevTest()
 const appDir = join(__dirname, '..')
 const locales = ['en', 'fr', 'de', 'it']
 let appPort
@@ -108,10 +110,17 @@ const runTests = () => {
 }
 
 describe('Custom routes i18n', () => {
-  describe('dev mode', () => {
+  describe.each([
+    ['dev', false],
+    ['turbo', true],
+  ])('%s mode', (_name, turbo) => {
+    if (!!turbo && !shouldRunTurboDev) {
+      return
+    }
+
     beforeAll(async () => {
       appPort = await findPort()
-      app = await launchApp(appDir, appPort)
+      app = await launchApp(appDir, appPort, { turbo })
     })
     afterAll(() => killApp(app))
     runTests(true)

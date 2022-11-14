@@ -8,7 +8,10 @@ import {
   findPort,
   killApp,
   waitFor,
+  shouldRunTurboDevTest,
 } from 'next-test-utils'
+
+const shouldRunTurboDev = shouldRunTurboDevTest()
 
 let app
 let appPort
@@ -18,10 +21,18 @@ const appDir = join(__dirname, '../')
 const pageFile = join(appDir, 'pages/[pid].js')
 const pageFileAlt = join(appDir, 'pages/[PiD].js')
 
-describe('Dynamic route rename casing', () => {
+describe.each([
+  ['dev', false],
+  ['turbo', true],
+])('Dynamic route rename casing %s', (_name, turbo) => {
+  if (!!turbo && !shouldRunTurboDev) {
+    return
+  }
+
   beforeAll(async () => {
     appPort = await findPort()
     app = await launchApp(appDir, appPort, {
+      turbo: !!turbo,
       onStderr(msg) {
         stderr += msg || ''
       },

@@ -1,8 +1,15 @@
 /* eslint-env jest */
 import fs from 'fs-extra'
 import { join } from 'path'
-import { nextBuild, findPort, launchApp, killApp } from 'next-test-utils'
+import {
+  nextBuild,
+  findPort,
+  launchApp,
+  killApp,
+  shouldRunTurboDevTest,
+} from 'next-test-utils'
 
+const shouldRunTurboDev = shouldRunTurboDevTest()
 const appDir = join(__dirname, '../app')
 const tsFile = join(appDir, 'node_modules/typescript/lib/typescript.js')
 
@@ -17,20 +24,31 @@ describe('Minimum TypeScript Warning', () => {
     )
   })
 
-  it('should show warning during next dev with old version', async () => {
-    let output = ''
+  it.each([
+    ['dev', false],
+    ['turbo', true],
+  ])(
+    'should show warning during next %s with old version',
+    async (_name, turbo) => {
+      if (!!turbo && !shouldRunTurboDev) {
+        return
+      }
 
-    const handleOutput = (msg) => {
-      output += msg
+      let output = ''
+
+      const handleOutput = (msg) => {
+        output += msg
+      }
+      const app = await launchApp(appDir, await findPort(), {
+        turbo: !!turbo,
+        onStdout: handleOutput,
+        onStderr: handleOutput,
+      })
+      await killApp(app)
+
+      expect(output).toContain('Minimum recommended TypeScript version is')
     }
-    const app = await launchApp(appDir, await findPort(), {
-      onStdout: handleOutput,
-      onStderr: handleOutput,
-    })
-    await killApp(app)
-
-    expect(output).toContain('Minimum recommended TypeScript version is')
-  })
+  )
 
   it('should not show warning during next build with new version', async () => {
     const content = await fs.readFile(tsFile, 'utf8')
@@ -46,21 +64,32 @@ describe('Minimum TypeScript Warning', () => {
     )
   })
 
-  it('should not show warning during next dev with new version', async () => {
-    let output = ''
+  it.each([
+    ['dev', false],
+    ['turbo', true],
+  ])(
+    'should not show warning during next %s with new version',
+    async (_name, turbo) => {
+      if (!!turbo && !shouldRunTurboDev) {
+        return
+      }
 
-    const handleOutput = (msg) => {
-      output += msg
+      let output = ''
+
+      const handleOutput = (msg) => {
+        output += msg
+      }
+      const content = await fs.readFile(tsFile, 'utf8')
+      await fs.writeFile(tsFile, content.replace('3.8.3', '4.3.4'))
+      const app = await launchApp(appDir, await findPort(), {
+        turbo: !!turbo,
+        onStdout: handleOutput,
+        onStderr: handleOutput,
+      })
+      await fs.writeFile(tsFile, content)
+      await killApp(app)
+
+      expect(output).not.toContain('Minimum recommended TypeScript version is')
     }
-    const content = await fs.readFile(tsFile, 'utf8')
-    await fs.writeFile(tsFile, content.replace('3.8.3', '4.3.4'))
-    const app = await launchApp(appDir, await findPort(), {
-      onStdout: handleOutput,
-      onStderr: handleOutput,
-    })
-    await fs.writeFile(tsFile, content)
-    await killApp(app)
-
-    expect(output).not.toContain('Minimum recommended TypeScript version is')
-  })
+  )
 })

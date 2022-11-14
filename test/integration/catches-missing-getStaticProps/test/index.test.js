@@ -7,15 +7,24 @@ import {
   launchApp,
   findPort,
   killApp,
+  shouldRunTurboDevTest,
 } from 'next-test-utils'
 
+const shouldRunTurboDev = shouldRunTurboDevTest()
 const appDir = join(__dirname, '../')
 const errorRegex = /getStaticPaths was added without a getStaticProps in/
 
 describe('Catches Missing getStaticProps', () => {
-  it('should catch it in dev mode', async () => {
+  it.each([
+    ['dev', false],
+    ['turbo', true],
+  ])('should catch it in %s mode', async (_name, turbo) => {
+    if (!!turbo && !shouldRunTurboDev) {
+      return
+    }
+
     const appPort = await findPort()
-    const app = await launchApp(appDir, appPort)
+    const app = await launchApp(appDir, appPort, { turbo })
     const html = await renderViaHTTP(appPort, '/hello')
     await killApp(app)
 

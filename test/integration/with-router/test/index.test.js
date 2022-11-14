@@ -10,9 +10,12 @@ import {
   nextServer,
   startApp,
   stopApp,
+  shouldRunTurboDevTest,
 } from 'next-test-utils'
 import webdriver from 'next-webdriver'
 import { join } from 'path'
+
+const shouldRunTurboDev = shouldRunTurboDevTest()
 
 describe('withRouter', () => {
   const appDir = join(__dirname, '../')
@@ -89,13 +92,21 @@ describe('withRouter', () => {
   })
 })
 
-describe('withRouter SSR', () => {
+describe.each([
+  ['dev', false],
+  ['turbo', true],
+])('withRouter SSR %s', (_name, turbo) => {
+  if (!!turbo && !shouldRunTurboDev) {
+    return
+  }
+
   let server
   let port
 
   beforeAll(async () => {
     port = await findPort()
     server = await launchApp(join(__dirname, '..'), port, {
+      turbo: !!turbo,
       env: { __NEXT_TEST_WITH_DEVTOOL: 1 },
     })
   })

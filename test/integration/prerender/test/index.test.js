@@ -13,8 +13,10 @@ import {
   startStaticServer,
   stopApp,
   waitFor,
+  shouldRunTurboDevTest,
 } from 'next-test-utils'
 
+const shouldRunTurboDev = shouldRunTurboDevTest()
 const appDir = join(__dirname, '..')
 const nextConfigPath = join(appDir, 'next.config.js')
 let app
@@ -211,7 +213,14 @@ const navigateTest = (dev = false) => {
 }
 
 describe('SSG Prerender', () => {
-  describe('dev mode getStaticPaths', () => {
+  describe.each([
+    ['dev', false],
+    ['turbo', true],
+  ])('%s mode getStaticPaths', (_name, turbo) => {
+    if (!!turbo && !shouldRunTurboDev) {
+      return
+    }
+
     beforeAll(async () => {
       await fs.writeFile(
         nextConfigPath,
@@ -222,6 +231,7 @@ describe('SSG Prerender', () => {
       await fs.remove(join(appDir, '.next'))
       appPort = await findPort()
       app = await launchApp(appDir, appPort, {
+        turbo: !!turbo,
         env: { __NEXT_TEST_WITH_DEVTOOL: 1 },
       })
     })

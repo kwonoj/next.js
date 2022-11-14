@@ -7,8 +7,10 @@ import {
   fetchViaHTTP,
   nextBuild,
   nextStart,
+  shouldRunTurboDevTest,
 } from 'next-test-utils'
 
+const shouldRunTurboDev = shouldRunTurboDevTest()
 const appDir = join(__dirname, '../')
 let appPort
 let app
@@ -50,10 +52,17 @@ function runTests() {
 }
 
 describe('API routes', () => {
-  describe('dev support', () => {
+  describe.each([
+    ['dev', false],
+    ['turbo', true],
+  ])('%s support', (_name, turbo) => {
+    if (!!turbo && !shouldRunTurboDev) {
+      return
+    }
+
     beforeAll(async () => {
       appPort = await findPort()
-      app = await launchApp(appDir, appPort)
+      app = await launchApp(appDir, appPort, { turbo })
     })
     afterAll(() => killApp(app))
 

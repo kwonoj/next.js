@@ -5,10 +5,12 @@ import {
   killApp,
   launchApp,
   renderViaHTTP,
+  shouldRunTurboDevTest,
 } from '../../../lib/next-test-utils'
 import webdriver from 'next-webdriver'
 import { join } from 'path'
 
+const shouldRunTurboDev = shouldRunTurboDevTest()
 const context = {}
 const appDir = join(__dirname, '../')
 
@@ -26,10 +28,18 @@ const getDocumentTitle = async (browser) => await browser.eval('document.title')
 const getMainHeadingTitle = async (browser) =>
   await browser.elementByCss('h1').text()
 
-describe('Client Navigation accessibility', () => {
+describe.each([
+  ['dev', false],
+  ['turbo', true],
+])('Client Navigation accessibility %s', (_name, turbo) => {
+  if (!!turbo && !shouldRunTurboDev) {
+    return
+  }
+
   beforeAll(async () => {
     context.appPort = await findPort()
     context.server = await launchApp(appDir, context.appPort, {
+      turbo: !!turbo,
       env: { __NEXT_TEST_WITH_DEVTOOL: 1 },
     })
 

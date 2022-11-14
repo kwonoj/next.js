@@ -13,9 +13,11 @@ import {
   nextBuild,
   nextStart,
   File,
+  shouldRunTurboDevTest,
 } from 'next-test-utils'
 import { join } from 'path'
 
+const shouldRunTurboDev = shouldRunTurboDevTest()
 let app
 let appPort
 const appDir = join(__dirname, '../')
@@ -207,11 +209,18 @@ function testWithTrailingSlash() {
 }
 
 describe('Trailing slashes', () => {
-  describe('dev mode, trailingSlash: false', () => {
+  describe.each([
+    ['dev', false],
+    ['turbo', true],
+  ])('%s mode, trailingSlash: false', (_name, turbo) => {
+    if (!!turbo && !shouldRunTurboDev) {
+      return
+    }
+
     beforeAll(async () => {
       nextConfig.replace('// trailingSlash: boolean', 'trailingSlash: false')
       appPort = await findPort()
-      app = await launchApp(appDir, appPort)
+      app = await launchApp(appDir, appPort, { turbo })
     })
     afterAll(async () => {
       nextConfig.restore()
@@ -221,11 +230,18 @@ describe('Trailing slashes', () => {
     testWithoutTrailingSlash()
   })
 
-  describe('dev mode, trailingSlash: true', () => {
+  describe.each([
+    ['dev', false],
+    ['turbo', true],
+  ])('%s mode, trailingSlash: true', (_name, turbo) => {
+    if (!!turbo && !shouldRunTurboDev) {
+      return
+    }
+
     beforeAll(async () => {
       nextConfig.replace('// trailingSlash: boolean', 'trailingSlash: true')
       appPort = await findPort()
-      app = await launchApp(appDir, appPort)
+      app = await launchApp(appDir, appPort, { turbo })
     })
     afterAll(async () => {
       nextConfig.restore()
@@ -305,12 +321,19 @@ describe('Trailing slashes', () => {
     })
   })
 
-  describe('dev mode, with basepath, trailingSlash: true', () => {
+  describe.each([
+    ['dev', false],
+    ['turbo', true],
+  ])('%s mode, with basepath, trailingSlash: true', (_name, turbo) => {
+    if (!!turbo && !shouldRunTurboDev) {
+      return
+    }
+
     beforeAll(async () => {
       nextConfig.replace('// trailingSlash: boolean', 'trailingSlash: true')
       nextConfig.replace('// basePath:', 'basePath:')
       appPort = await findPort()
-      app = await launchApp(appDir, appPort)
+      app = await launchApp(appDir, appPort, { turbo })
     })
     afterAll(async () => {
       nextConfig.restore()

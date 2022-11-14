@@ -2,8 +2,15 @@
 
 import fs from 'fs-extra'
 import { join } from 'path'
-import { fetchViaHTTP, findPort, launchApp, nextBuild } from 'next-test-utils'
+import {
+  fetchViaHTTP,
+  findPort,
+  launchApp,
+  nextBuild,
+  shouldRunTurboDevTest,
+} from 'next-test-utils'
 
+const shouldRunTurboDev = shouldRunTurboDevTest()
 let appDir = join(__dirname, '..')
 const middlewarePath = join(appDir, 'middleware.js')
 
@@ -136,12 +143,20 @@ const runTests = () => {
 describe('Errors on invalid custom middleware matchers', () => {
   afterAll(() => fs.remove(middlewarePath))
 
-  describe('dev mode', () => {
+  describe.each([
+    ['dev', false],
+    ['turbo', true],
+  ])('%s mode', (_name, turbo) => {
+    if (!!turbo && !shouldRunTurboDev) {
+      return
+    }
+
     beforeAll(() => {
       getStderr = async () => {
         let stderr = ''
         const port = await findPort()
         await launchApp(appDir, port, {
+          turbo: !!turbo,
           onStderr(msg) {
             stderr += msg
           },

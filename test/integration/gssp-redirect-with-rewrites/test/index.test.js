@@ -7,17 +7,27 @@ import {
   launchApp,
   killApp,
   check,
+  shouldRunTurboDevTest,
 } from 'next-test-utils'
 import webdriver from 'next-webdriver'
 
 // test suites
 
+const shouldRunTurboDev = shouldRunTurboDevTest()
 const context = {}
 
-describe('getServerSideProps redirects', () => {
+describe.each([
+  ['dev', false],
+  ['turbo', true],
+])('getServerSideProps redirects %s', (_name, turbo) => {
+  if (!!turbo && !shouldRunTurboDev) {
+    return
+  }
+
   beforeAll(async () => {
     context.appPort = await findPort()
     context.server = await launchApp(join(__dirname, '../'), context.appPort, {
+      turbo: !!turbo,
       env: { __NEXT_TEST_WITH_DEVTOOL: 1 },
     })
 

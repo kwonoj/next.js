@@ -10,8 +10,10 @@ import {
   killApp,
   nextBuild,
   check,
+  shouldRunTurboDevTest,
 } from 'next-test-utils'
 
+const shouldRunTurboDev = shouldRunTurboDevTest()
 const appDir = join(__dirname, '..')
 let appPort
 let app
@@ -22,12 +24,20 @@ async function get$(path, query) {
 }
 
 describe('TypeScript Features', () => {
-  describe('default behavior', () => {
+  describe.each([
+    ['dev', false],
+    ['turbo', true],
+  ])('default behavior %s', (_name, turbo) => {
+    if (!!turbo && !shouldRunTurboDev) {
+      return
+    }
+
     let output = ''
 
     beforeAll(async () => {
       appPort = await findPort()
       app = await launchApp(appDir, appPort, {
+        turbo: !!turbo,
         onStdout(msg) {
           output += msg || ''
         },

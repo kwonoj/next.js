@@ -7,10 +7,12 @@ import {
   killApp,
   launchApp,
   nextBuild,
+  shouldRunTurboDevTest,
 } from 'next-test-utils'
 
 jest.setTimeout(1000 * 60 * 2)
 
+const shouldRunTurboDev = shouldRunTurboDevTest()
 const context = {
   appDir: join(__dirname, '../'),
   logs: { output: '', stdout: '', stderr: '' },
@@ -23,13 +25,21 @@ describe('Middleware importing Node.js modules', () => {
     }
   })
 
-  describe('dev mode', () => {
+  describe.each([
+    ['dev', false],
+    ['turbo', true],
+  ])('%s mode', (_name, turbo) => {
+    if (!!turbo && !shouldRunTurboDev) {
+      return
+    }
+
     // restart the app for every test since the latest error is not shown sometimes
     // See https://github.com/vercel/next.js/issues/36575
     beforeEach(async () => {
       context.logs = { stdout: '', stderr: '' }
       context.appPort = await findPort()
       context.app = await launchApp(context.appDir, context.appPort, {
+        turbo: !!turbo,
         env: { __NEXT_TEST_WITH_DEVTOOL: 1 },
         onStdout(msg) {
           context.logs.stdout += msg

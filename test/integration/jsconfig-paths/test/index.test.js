@@ -12,9 +12,11 @@ import {
   killApp,
   check,
   File,
+  shouldRunTurboDevTest,
 } from 'next-test-utils'
 import * as JSON5 from 'json5'
 
+const shouldRunTurboDev = shouldRunTurboDevTest()
 const appDir = join(__dirname, '..')
 let appPort
 let app
@@ -25,12 +27,20 @@ async function get$(path, query) {
 }
 
 function runTests() {
-  describe('default behavior', () => {
+  describe.each([
+    ['dev', false],
+    ['turbo', true],
+  ])('default behavior %s', (_name, turbo) => {
+    if (!!turbo && !shouldRunTurboDev) {
+      return
+    }
+
     let output = ''
 
     beforeAll(async () => {
       appPort = await findPort()
       app = await launchApp(appDir, appPort, {
+        turbo: !!turbo,
         onStderr(msg) {
           output += msg || ''
         },

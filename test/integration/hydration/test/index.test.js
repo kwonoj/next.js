@@ -10,8 +10,10 @@ import {
   killApp,
   launchApp,
   check,
+  shouldRunTurboDevTest,
 } from 'next-test-utils'
 
+const shouldRunTurboDev = shouldRunTurboDevTest()
 const appDir = path.join(__dirname, '..')
 let app
 let appPort
@@ -40,11 +42,18 @@ const runTests = () => {
 }
 
 describe('Hydration', () => {
-  describe('dev mode', () => {
+  describe.each([
+    ['dev', false],
+    ['turbo', true],
+  ])('%s mode', (_name, turbo) => {
+    if (!!turbo && !shouldRunTurboDev) {
+      return
+    }
+
     beforeAll(async () => {
       await fs.remove(path.join(appDir, '.next'))
       appPort = await findPort()
-      app = await launchApp(appDir, appPort)
+      app = await launchApp(appDir, appPort, { turbo })
     })
     afterAll(() => killApp(app))
 

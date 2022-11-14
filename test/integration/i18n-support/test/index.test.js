@@ -14,9 +14,11 @@ import {
   File,
   launchApp,
   check,
+  shouldRunTurboDevTest,
 } from 'next-test-utils'
 import assert from 'assert'
 
+const shouldRunTurboDev = shouldRunTurboDevTest()
 const appDir = join(__dirname, '../')
 const nextConfig = new File(join(appDir, 'next.config.js'))
 const ctx = {
@@ -39,7 +41,14 @@ describe('i18n Support', () => {
   })
   afterAll(() => ctx.externalApp.close())
 
-  describe('dev mode', () => {
+  describe.each([
+    ['dev', false],
+    ['turbo', true],
+  ])('%s mode', (_name, turbo) => {
+    if (!!turbo && !shouldRunTurboDev) {
+      return
+    }
+
     const curCtx = {
       ...ctx,
       isDev: true,
@@ -48,7 +57,7 @@ describe('i18n Support', () => {
       await fs.remove(join(appDir, '.next'))
       nextConfig.replace(/__EXTERNAL_PORT__/g, ctx.externalPort)
       curCtx.appPort = await findPort()
-      curCtx.app = await launchApp(appDir, curCtx.appPort)
+      curCtx.app = await launchApp(appDir, curCtx.appPort, { turbo: !!turbo })
       curCtx.buildId = 'development'
     })
     afterAll(async () => {
@@ -392,7 +401,14 @@ describe('i18n Support', () => {
       })
     }
 
-    describe('dev mode', () => {
+    describe.each([
+      ['dev', false],
+      ['turbo', true],
+    ])('%s mode', (_name, turbo) => {
+      if (!!turbo && !shouldRunTurboDev) {
+        return
+      }
+
       const curCtx = {
         ...ctx,
         isDev: true,
@@ -402,7 +418,7 @@ describe('i18n Support', () => {
         nextConfig.replace('// trailingSlash', 'trailingSlash')
 
         curCtx.appPort = await findPort()
-        curCtx.app = await launchApp(appDir, curCtx.appPort)
+        curCtx.app = await launchApp(appDir, curCtx.appPort, { turbo: !!turbo })
       })
       afterAll(async () => {
         nextConfig.restore()

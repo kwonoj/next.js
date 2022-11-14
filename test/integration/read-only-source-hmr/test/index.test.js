@@ -7,6 +7,7 @@ import {
   getBrowserBodyText,
   killApp,
   launchApp,
+  shouldRunTurboDevTest,
 } from 'next-test-utils'
 import webdriver from 'next-webdriver'
 import { join } from 'path'
@@ -14,6 +15,7 @@ import { join } from 'path'
 const READ_ONLY_PERMISSIONS = 0o444
 const READ_WRITE_PERMISSIONS = 0o644
 
+const shouldRunTurboDev = shouldRunTurboDevTest()
 const appDir = join(__dirname, '..')
 const pagePath = join(appDir, 'pages/hello.js')
 
@@ -34,12 +36,20 @@ async function writeReadOnlyFile(path, content) {
   await fs.chmod(path, READ_ONLY_PERMISSIONS)
 }
 
-describe('Read-only source HMR', () => {
+describe.each([
+  ['dev', false],
+  ['turbo', true],
+])('Read-only source HMR %s', (_name, turbo) => {
+  if (!!turbo && !shouldRunTurboDev) {
+    return
+  }
+
   beforeAll(async () => {
     await fs.chmod(pagePath, READ_ONLY_PERMISSIONS)
 
     appPort = await findPort()
     app = await launchApp(appDir, appPort, {
+      turbo: !!turbo,
       env: {
         __NEXT_TEST_WITH_DEVTOOL: 1,
         // Events can be finicky in CI. This switches to a more reliable
@@ -106,7 +116,7 @@ describe('Read-only source HMR', () => {
         newPagePath,
         `
         const New = () => <p>New page</p>
-  
+
         export default New
       `
       )

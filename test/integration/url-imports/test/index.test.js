@@ -15,10 +15,12 @@ import {
   check,
   startStaticServer,
   stopApp,
+  shouldRunTurboDevTest,
 } from 'next-test-utils'
 import webdriver from 'next-webdriver'
 
 jest.setTimeout(1000 * 60 * 2)
+const shouldRunTurboDev = shouldRunTurboDevTest()
 const appDir = join(__dirname, '../')
 
 describe(`Handle url imports`, () => {
@@ -38,14 +40,21 @@ describe(`Handle url imports`, () => {
   })
 
   for (const dev of [true, false]) {
-    describe(dev ? 'with next dev' : 'with next build', () => {
+    describe.each([
+      ['dev', false],
+      ['turbo', true],
+    ])(dev ? 'with next dev %s' : 'with next build', (_name, turbo) => {
+      if (!!turbo && !shouldRunTurboDev) {
+        return
+      }
+
       let appPort
       let app
       beforeAll(async () => {
         await fs.remove(join(appDir, '.next'))
         if (dev) {
           appPort = await findPort()
-          app = await launchApp(appDir, appPort)
+          app = await launchApp(appDir, appPort, { turbo })
         } else {
           await nextBuild(appDir)
           appPort = await findPort()

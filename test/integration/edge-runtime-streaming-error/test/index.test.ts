@@ -7,10 +7,12 @@ import {
   nextBuild,
   nextStart,
   waitFor,
+  shouldRunTurboDevTest,
 } from 'next-test-utils'
 import path from 'path'
 import { remove } from 'fs-extra'
 
+const shouldRunTurboDev = shouldRunTurboDevTest()
 const appDir = path.join(__dirname, '..')
 
 function test(context: ReturnType<typeof createContext>) {
@@ -46,13 +48,21 @@ function createContext() {
   return ctx
 }
 
-describe('dev mode', () => {
+describe.each([
+  ['dev', false],
+  ['turbo', true],
+])('%s mode', (_name, turbo) => {
+  if (!!turbo && !shouldRunTurboDev) {
+    return
+  }
+
   const context = createContext()
 
   beforeAll(async () => {
     context.appPort = await findPort()
     context.app = await launchApp(appDir, context.appPort, {
       ...context.handler,
+      turbo: !!turbo,
       env: { __NEXT_TEST_WITH_DEVTOOL: 1 },
     })
   })

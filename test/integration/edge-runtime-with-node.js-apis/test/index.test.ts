@@ -9,11 +9,13 @@ import {
   launchApp,
   nextBuild,
   waitFor,
+  shouldRunTurboDevTest,
 } from 'next-test-utils'
 import { join } from 'path'
 
 jest.setTimeout(1000 * 60 * 2)
 
+const shouldRunTurboDev = shouldRunTurboDevTest()
 const unsupportedFunctions = [
   'setImmediate',
   'clearImmediate',
@@ -62,7 +64,14 @@ describe.each([
 ])('$title using Node.js API', ({ computeRoute }) => {
   const appDir = join(__dirname, '..')
 
-  describe('dev mode', () => {
+  describe.each([
+    ['dev', false],
+    ['turbo', true],
+  ])('%s mode', (_name, turbo) => {
+    if (!!turbo && !shouldRunTurboDev) {
+      return
+    }
+
     let output = ''
     let appPort: number
     let app = null
@@ -71,6 +80,7 @@ describe.each([
       output = ''
       appPort = await findPort()
       app = await launchApp(appDir, appPort, {
+        turbo: !!turbo,
         env: { __NEXT_TEST_WITH_DEVTOOL: 1 },
         onStdout(msg) {
           output += msg

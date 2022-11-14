@@ -11,9 +11,11 @@ import {
   nextStart,
   renderViaHTTP,
   check,
+  shouldRunTurboDevTest,
 } from 'next-test-utils'
 import { join } from 'path'
 
+const shouldRunTurboDev = shouldRunTurboDevTest()
 let app
 let appPort
 let stderr
@@ -237,10 +239,17 @@ function runInvalidPagesTests(buildFn) {
 }
 
 describe('Dynamic Optional Routing', () => {
-  describe('dev mode', () => {
+  describe.each([
+    ['dev', false],
+    ['turbo', true],
+  ])('%s mode', (_name, turbo) => {
+    if (!!turbo && !shouldRunTurboDev) {
+      return
+    }
+
     beforeAll(async () => {
       appPort = await findPort()
-      app = await launchApp(appDir, appPort)
+      app = await launchApp(appDir, appPort, { turbo: !!turbo })
     })
     afterAll(() => killApp(app))
 
@@ -249,6 +258,7 @@ describe('Dynamic Optional Routing', () => {
     runInvalidPagesTests(async (appDir) => {
       stderr = ''
       await launchApp(appDir, await findPort(), {
+        turbo: !!turbo,
         onStderr: (msg) => {
           stderr += msg
         },

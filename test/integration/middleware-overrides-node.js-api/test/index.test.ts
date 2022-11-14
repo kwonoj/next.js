@@ -6,21 +6,31 @@ import {
   killApp,
   launchApp,
   waitFor,
+  shouldRunTurboDevTest,
 } from 'next-test-utils'
 import { join } from 'path'
 
+const shouldRunTurboDev = shouldRunTurboDevTest()
 const context = { appDir: join(__dirname, '../'), appPort: NaN, app: null }
 
 jest.setTimeout(1000 * 60 * 2)
 
 describe('Middleware overriding a Node.js API', () => {
-  describe('dev mode', () => {
+  describe.each([
+    ['dev', false],
+    ['turbo', true],
+  ])('%s mode', (_name, turbo) => {
+    if (!!turbo && !shouldRunTurboDev) {
+      return
+    }
+
     let output = ''
 
     beforeAll(async () => {
       output = ''
       context.appPort = await findPort()
       context.app = await launchApp(context.appDir, context.appPort, {
+        turbo: !!turbo,
         onStdout(msg) {
           output += msg
         },

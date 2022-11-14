@@ -1,18 +1,33 @@
 /* eslint-env jest */
 
 import { join } from 'path'
-import { renderViaHTTP, findPort, launchApp, killApp } from 'next-test-utils'
+import {
+  renderViaHTTP,
+  findPort,
+  launchApp,
+  killApp,
+  shouldRunTurboDevTest,
+} from 'next-test-utils'
 
+const shouldRunTurboDev = shouldRunTurboDevTest()
 const appDir = join(__dirname, '..')
 let output
 
-describe('Custom Document Head Warnings', () => {
+describe.each([
+  ['dev', false],
+  ['turbo', true],
+])('Custom Document Head Warnings %s', (_name, turbo) => {
+  if (!!turbo && !shouldRunTurboDev) {
+    return
+  }
+
   beforeAll(async () => {
     const handleOutput = (msg) => {
       output += msg
     }
     const appPort = await findPort()
     const app = await launchApp(appDir, appPort, {
+      turbo: !!turbo,
       onStdout: handleOutput,
       onStderr: handleOutput,
     })

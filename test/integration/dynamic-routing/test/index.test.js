@@ -17,10 +17,12 @@ import {
   check,
   hasRedbox,
   getRedboxHeader,
+  shouldRunTurboDevTest,
 } from 'next-test-utils'
 import cheerio from 'cheerio'
 import escapeRegex from 'escape-string-regexp'
 
+const shouldRunTurboDev = shouldRunTurboDevTest()
 let app
 let appPort
 let buildId
@@ -1516,12 +1518,19 @@ describe('Dynamic Routing', () => {
     afterAll(() => fs.remove(middlewarePath))
   }
 
-  describe('dev mode', () => {
+  describe.each([
+    ['dev', false],
+    ['turbo', true],
+  ])('%s mode', (_name, turbo) => {
+    if (!!turbo && !shouldRunTurboDev) {
+      return
+    }
+
     beforeAll(async () => {
       await fs.remove(nextConfig)
 
       appPort = await findPort()
-      app = await launchApp(appDir, appPort)
+      app = await launchApp(appDir, appPort, { turbo })
       buildId = 'development'
     })
     afterAll(() => killApp(app))

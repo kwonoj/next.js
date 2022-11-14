@@ -11,7 +11,10 @@ import {
   renderViaHTTP,
   fetchViaHTTP,
   getPageFileFromPagesManifest,
+  shouldRunTurboDevTest,
 } from 'next-test-utils'
+
+const shouldRunTurboDev = shouldRunTurboDevTest()
 
 const appDir = join(__dirname, '../')
 
@@ -70,10 +73,17 @@ describe('Default 404 Page with custom _error', () => {
     runTests('server')
   })
 
-  describe('dev mode', () => {
+  describe.each([
+    ['dev', false],
+    ['turbo', true],
+  ])('dev mode %s', (_name, turbo) => {
+    if (!!turbo && !shouldRunTurboDev) {
+      return
+    }
+
     beforeAll(async () => {
       appPort = await findPort()
-      app = await launchApp(appDir, appPort)
+      app = await launchApp(appDir, appPort, { turbo })
     })
     afterAll(() => killApp(app))
 

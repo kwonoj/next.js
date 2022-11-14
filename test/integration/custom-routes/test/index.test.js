@@ -23,8 +23,10 @@ import {
   nextExport,
   hasRedbox,
   check,
+  shouldRunTurboDevTest,
 } from 'next-test-utils'
 
+const shouldRunTurboDev = shouldRunTurboDevTest()
 let appDir = join(__dirname, '..')
 const nextConfigPath = join(appDir, 'next.config.js')
 let externalServerHits = new Set()
@@ -2373,7 +2375,14 @@ describe('Custom routes', () => {
     await fs.writeFile(nextConfigPath, nextConfigRestoreContent)
   })
 
-  describe('dev mode', () => {
+  describe.each([
+    ['dev', false],
+    ['turbo', true],
+  ])('%s mode', (_name, turbo) => {
+    if (!!turbo && !shouldRunTurboDev) {
+      return
+    }
+
     let nextConfigContent
 
     beforeAll(async () => {
@@ -2387,14 +2396,14 @@ describe('Custom routes', () => {
       )
 
       const tempPort = await findPort()
-      const tempApp = await launchApp(appDir, tempPort)
+      const tempApp = await launchApp(appDir, tempPort, { turbo: !!turbo })
       await renderViaHTTP(tempPort, '/')
 
       await killApp(tempApp)
       await fs.writeFile(nextConfigPath, nextConfigContent)
 
       appPort = await findPort()
-      app = await launchApp(appDir, appPort)
+      app = await launchApp(appDir, appPort, { turbo: !!turbo })
       buildId = 'development'
     })
     afterAll(async () => {
@@ -2404,10 +2413,18 @@ describe('Custom routes', () => {
     runTests(true)
   })
 
-  describe('no-op rewrite', () => {
+  describe.each([
+    ['dev', false],
+    ['turbo', true],
+  ])('no-op rewrite %s', (_name, turbo) => {
+    if (!!turbo && !shouldRunTurboDev) {
+      return
+    }
+
     beforeAll(async () => {
       appPort = await findPort()
       app = await launchApp(appDir, appPort, {
+        turbo: !!turbo,
         env: {
           ADD_NOOP_REWRITE: 'true',
         },
@@ -2511,11 +2528,11 @@ describe('Custom routes', () => {
   })
 
   describe('should load custom routes when only one type is used', () => {
-    const runSoloTests = (isDev) => {
+    const runSoloTests = (isDev, turbo) => {
       const buildAndStart = async () => {
         if (isDev) {
           appPort = await findPort()
-          app = await launchApp(appDir, appPort)
+          app = await launchApp(appDir, appPort, { turbo })
         } else {
           const { code } = await nextBuild(appDir)
           if (code !== 0) throw new Error(`failed to build, got code ${code}`)
@@ -2605,8 +2622,15 @@ describe('Custom routes', () => {
       })
     }
 
-    describe('dev mode', () => {
-      runSoloTests(true)
+    describe.each([
+      ['dev', false],
+      ['turbo', true],
+    ])('%s mode', (_name, turbo) => {
+      if (!!turbo && !shouldRunTurboDev) {
+        return
+      }
+
+      runSoloTests(true, turbo)
     })
 
     describe('production mode', () => {

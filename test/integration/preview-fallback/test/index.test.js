@@ -14,8 +14,10 @@ import {
   nextStart,
   renderViaHTTP,
   check,
+  shouldRunTurboDevTest,
 } from 'next-test-utils'
 
+const shouldRunTurboDev = shouldRunTurboDevTest()
 const appDir = join(__dirname, '..')
 
 let app
@@ -267,10 +269,17 @@ function runTests(isDev) {
 }
 
 describe('Preview mode with fallback pages', () => {
-  describe('dev Mode', () => {
+  describe.each([
+    ['dev', false],
+    ['turbo', true],
+  ])('%s Mode', (_name, turbo) => {
+    if (!!turbo && !shouldRunTurboDev) {
+      return
+    }
+
     beforeAll(async () => {
       appPort = await findPort()
-      app = await launchApp(appDir, appPort)
+      app = await launchApp(appDir, appPort, { turbo })
     })
     afterAll(() => killApp(app))
 

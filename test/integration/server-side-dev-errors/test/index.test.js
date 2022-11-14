@@ -10,9 +10,11 @@ import {
   check,
   hasRedbox,
   getRedboxSource,
+  shouldRunTurboDevTest,
 } from 'next-test-utils'
 import stripAnsi from 'strip-ansi'
 
+const shouldRunTurboDev = shouldRunTurboDevTest()
 const appDir = join(__dirname, '../')
 const gspPage = join(appDir, 'pages/gsp.js')
 const gsspPage = join(appDir, 'pages/gssp.js')
@@ -24,10 +26,18 @@ let stderr = ''
 let appPort
 let app
 
-describe('server-side dev errors', () => {
+describe.each([
+  ['dev', false],
+  ['turbo', true],
+])('server-side %s errors', (_name, turbo) => {
+  if (!!turbo && !shouldRunTurboDev) {
+    return
+  }
+
   beforeAll(async () => {
     appPort = await findPort()
     app = await launchApp(appDir, appPort, {
+      turbo: !!turbo,
       onStderr(msg) {
         stderr += msg
       },

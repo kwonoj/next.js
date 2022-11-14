@@ -14,8 +14,10 @@ import {
   killApp,
   fetchViaHTTP,
   check,
+  shouldRunTurboDevTest,
 } from 'next-test-utils'
 
+const shouldRunTurboDev = shouldRunTurboDevTest()
 let app
 let appPort
 let output = ''
@@ -144,11 +146,19 @@ const runTests = (mode = 'dev', didReload = false) => {
 }
 
 describe('Env Config', () => {
-  describe('dev mode', () => {
+  describe.each([
+    ['dev', false],
+    ['turbo', true],
+  ])('%s mode', (_name, turbo) => {
+    if (!!turbo && !shouldRunTurboDev) {
+      return
+    }
+
     beforeAll(async () => {
       output = ''
       appPort = await findPort()
       app = await launchApp(appDir, appPort, {
+        turbo: !!turbo,
         env: {
           PROCESS_ENV_KEY: 'processenvironment',
           ENV_FILE_PROCESS_ENV: 'env-cli',
@@ -347,10 +357,18 @@ describe('Env Config', () => {
     })
   })
 
-  describe('test environment', () => {
+  describe.each([
+    ['dev', false],
+    ['turbo', true],
+  ])('test environment %s', (_name, turbo) => {
+    if (!!turbo && !shouldRunTurboDev) {
+      return
+    }
+
     beforeAll(async () => {
       appPort = await findPort()
       app = await launchApp(appDir, appPort, {
+        turbo: !!turbo,
         env: {
           PROCESS_ENV_KEY: 'processenvironment',
           NODE_ENV: 'test',

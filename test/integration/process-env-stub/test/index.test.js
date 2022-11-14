@@ -8,10 +8,12 @@ import {
   waitFor,
   nextBuild,
   nextStart,
+  shouldRunTurboDevTest,
 } from 'next-test-utils'
 import { join } from 'path'
 import webdriver from 'next-webdriver'
 
+const shouldRunTurboDev = shouldRunTurboDevTest()
 const appDir = join(__dirname, '..')
 let app
 let stderr
@@ -55,10 +57,18 @@ const checkMissingClient = async (pathname, prop, shouldWarn = false) => {
 }
 
 describe('process.env stubbing', () => {
-  describe('dev mode', () => {
+  describe.each([
+    ['dev', false],
+    ['turbo', true],
+  ])('%s mode', (_name, turbo) => {
+    if (!!turbo && !shouldRunTurboDev) {
+      return
+    }
+
     beforeAll(async () => {
       appPort = await findPort()
       app = await launchApp(appDir, appPort, {
+        turbo: !!turbo,
         env: {
           NEXT_PUBLIC_HI: 'hi',
           I_SHOULD_BE_HERE: 'hello',

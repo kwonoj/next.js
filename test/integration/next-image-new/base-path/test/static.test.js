@@ -7,11 +7,13 @@ import {
   File,
   launchApp,
   waitFor,
+  shouldRunTurboDevTest,
 } from 'next-test-utils'
 import webdriver from 'next-webdriver'
 import cheerio from 'cheerio'
 import { join } from 'path'
 
+const shouldRunTurboDev = shouldRunTurboDevTest()
 const appDir = join(__dirname, '../')
 let appPort
 let app
@@ -147,10 +149,17 @@ describe('Static Image Component Tests for basePath', () => {
     runTests(false)
   })
 
-  describe('dev mode', () => {
+  describe.each([
+    ['dev', false],
+    ['turbo', true],
+  ])('%s mode', (_name, turbo) => {
+    if (!!turbo && !shouldRunTurboDev) {
+      return
+    }
+
     beforeAll(async () => {
       appPort = await findPort()
-      app = await launchApp(appDir, appPort)
+      app = await launchApp(appDir, appPort, { turbo })
       html = await renderViaHTTP(appPort, '/docs/static-img')
       $ = cheerio.load(html)
       browser = await webdriver(appPort, '/docs/static-img')

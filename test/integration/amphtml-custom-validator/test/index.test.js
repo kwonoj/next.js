@@ -8,8 +8,10 @@ import {
   killApp,
   launchApp,
   renderViaHTTP,
+  shouldRunTurboDevTest,
 } from 'next-test-utils'
 
+const shouldRunTurboDev = shouldRunTurboDevTest()
 let app
 let appPort
 const appDir = join(__dirname, '../')
@@ -28,11 +30,19 @@ describe('AMP Custom Validator', () => {
     expect(html).toContain('Hello from AMP')
   })
 
-  it('should run in dev mode successfully', async () => {
+  it.each([
+    ['dev', false],
+    ['turbo', true],
+  ])('should run in dev mode successfully %s', async (_name, turbo) => {
+    if (!!turbo && !shouldRunTurboDev) {
+      return
+    }
+
     let stderr = ''
 
     appPort = await findPort()
     app = await launchApp(appDir, appPort, {
+      turbo: !!turbo,
       onStderr(msg) {
         stderr += msg || ''
       },

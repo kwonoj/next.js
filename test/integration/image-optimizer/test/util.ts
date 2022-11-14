@@ -13,10 +13,12 @@ import {
   nextBuild,
   nextStart,
   waitFor,
+  shouldRunTurboDevTest,
 } from 'next-test-utils'
 import isAnimated from 'next/dist/compiled/is-animated'
 import type { RequestInit } from 'node-fetch'
 
+const shouldRunTurboDev = shouldRunTurboDevTest()
 const largeSize = 1080 // defaults defined in server/config.ts
 const sharpMissingText = `For production Image Optimization with Next.js, the optional 'sharp' package is strongly recommended`
 const sharpOutdatedText = `Your installed version of the 'sharp' package does not support AVIF images. Run 'yarn add sharp@latest' to upgrade to the latest version`
@@ -1259,7 +1261,14 @@ export const setupTests = (ctx) => {
 
   // only run one server config with outdated sharp
   if (!ctx.isOutdatedSharp) {
-    describe('dev support w/o next.config.js', () => {
+    describe.each([
+      ['dev', false],
+      ['turbo', true],
+    ])('%s support w/o next.config.js', (_name, turbo) => {
+      if (!!turbo && !shouldRunTurboDev) {
+        return
+      }
+
       const size = 384 // defaults defined in server/config.ts
       const curCtx = {
         ...ctx,
@@ -1273,6 +1282,7 @@ export const setupTests = (ctx) => {
         curCtx.nextOutput = ''
         curCtx.appPort = await findPort()
         curCtx.app = await launchApp(curCtx.appDir, curCtx.appPort, {
+          turbo: !!turbo,
           onStderr(msg) {
             curCtx.nextOutput += msg
           },
@@ -1292,7 +1302,14 @@ export const setupTests = (ctx) => {
       runTests(curCtx)
     })
 
-    describe('dev support with next.config.js', () => {
+    describe.each([
+      ['dev', false],
+      ['turbo', true],
+    ])('%s support with next.config.js', (_name, turbo) => {
+      if (!!turbo && !shouldRunTurboDev) {
+        return
+      }
+
       const size = 400
       const curCtx = {
         ...ctx,
@@ -1314,6 +1331,7 @@ export const setupTests = (ctx) => {
         await cleanImagesDir(ctx)
         curCtx.appPort = await findPort()
         curCtx.app = await launchApp(curCtx.appDir, curCtx.appPort, {
+          turbo: !!turbo,
           onStderr(msg) {
             curCtx.nextOutput += msg
           },

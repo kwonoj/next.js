@@ -12,10 +12,12 @@ import {
   nextStart,
   renderViaHTTP,
   waitFor,
+  shouldRunTurboDevTest,
 } from 'next-test-utils'
 import webdriver from 'next-webdriver'
 import { join } from 'path'
 
+const shouldRunTurboDev = shouldRunTurboDevTest()
 const fixturesDir = join(__dirname, '../..', 'css-fixtures')
 
 describe('CSS Support', () => {
@@ -35,7 +37,14 @@ describe('CSS Support', () => {
     })
   })
 
-  describe('Ordering with styled-jsx (dev)', () => {
+  describe.each([
+    ['dev', false],
+    ['turbo', true],
+  ])('Ordering with styled-jsx (%s)', (_name, turbo) => {
+    if (!!turbo && !shouldRunTurboDev) {
+      return
+    }
+
     const appDir = join(fixturesDir, 'with-styled-jsx')
 
     let appPort
@@ -43,7 +52,7 @@ describe('CSS Support', () => {
     beforeAll(async () => {
       await remove(join(appDir, '.next'))
       appPort = await findPort()
-      app = await launchApp(appDir, appPort)
+      app = await launchApp(appDir, appPort, { turbo })
     })
     afterAll(async () => {
       await killApp(app)
@@ -93,7 +102,14 @@ describe('CSS Support', () => {
     })
   })
 
-  describe('Ordering with Global CSS and Modules (dev)', () => {
+  describe.each([
+    ['dev', false],
+    ['turbo', true],
+  ])('Ordering with Global CSS and Modules (%s)', (_name, turbo) => {
+    if (!!turbo && !shouldRunTurboDev) {
+      return
+    }
+
     const appDir = join(fixturesDir, 'global-and-module-ordering')
 
     let appPort
@@ -101,7 +117,7 @@ describe('CSS Support', () => {
     beforeAll(async () => {
       await remove(join(appDir, '.next'))
       appPort = await findPort()
-      app = await launchApp(appDir, appPort)
+      app = await launchApp(appDir, appPort, { turbo })
     })
     afterAll(async () => {
       await killApp(app)
@@ -124,7 +140,7 @@ describe('CSS Support', () => {
       expect(totalCount).not.toBe(0)
     })
 
-    it('should have the correct color (css ordering)', async () => {
+    it('should have the correct color (css ordering) %s', async () => {
       const browser = await webdriver(appPort, '/')
 
       const currentColor = await browser.eval(
@@ -627,13 +643,20 @@ describe('CSS Support', () => {
       })
     }
 
-    describe('Development Mode', () => {
+    describe.each([
+      ['dev', false],
+      ['turbo', true],
+    ])('%s Mode', (_name, turbo) => {
+      if (!!turbo && !shouldRunTurboDev) {
+        return
+      }
+
       beforeAll(async () => {
         await remove(join(appDir, '.next'))
       })
       beforeAll(async () => {
         appPort = await findPort()
-        app = await launchApp(appDir, appPort)
+        app = await launchApp(appDir, appPort, { turbo })
       })
       afterAll(async () => {
         await killApp(app)
@@ -939,13 +962,20 @@ describe('CSS Support', () => {
       })
     }
 
-    describe('Development Mode', () => {
+    describe.each([
+      ['dev', false],
+      ['turbo', true],
+    ])('%s Mode', (_name, turbo) => {
+      if (!!turbo && !shouldRunTurboDev) {
+        return
+      }
+
       beforeAll(async () => {
         await remove(join(appDir, '.next'))
       })
       beforeAll(async () => {
         appPort = await findPort()
-        app = await launchApp(appDir, appPort)
+        app = await launchApp(appDir, appPort, { turbo })
       })
       afterAll(async () => {
         await killApp(app)

@@ -15,7 +15,10 @@ import {
   getPageFileFromPagesManifest,
   getPagesManifest,
   updatePagesManifest,
+  shouldRunTurboDevTest,
 } from 'next-test-utils'
+
+const shouldRunTurboDev = shouldRunTurboDevTest()
 
 const appDir = join(__dirname, '../')
 const pages500 = join(appDir, 'pages/500.js')
@@ -60,11 +63,18 @@ const runTests = (mode = 'server') => {
 }
 
 describe('500 Page Support', () => {
-  describe('dev mode', () => {
+  describe.each([
+    ['dev', false],
+    ['turbo', true],
+  ])('dev mode %s', (_name, turbo) => {
+    if (!!turbo && !shouldRunTurboDev) {
+      return
+    }
+
     beforeAll(async () => {
       await fs.remove(join(appDir, '.next'))
       appPort = await findPort()
-      app = await launchApp(appDir, appPort)
+      app = await launchApp(appDir, appPort, { turbo })
     })
     afterAll(() => killApp(app))
 
@@ -443,34 +453,45 @@ describe('500 Page Support', () => {
     expect(code).toBe(1)
   })
 
-  it('shows error with getInitialProps in pages/500 dev', async () => {
-    await fs.move(pages500, `${pages500}.bak`)
-    await fs.writeFile(
-      pages500,
-      `
+  it.each([
+    ['dev', false],
+    ['turbo', true],
+  ])(
+    'shows error with getInitialProps in pages/500 dev %s',
+    async (_name, turbo) => {
+      if (!!turbo && !shouldRunTurboDev) {
+        return
+      }
+
+      await fs.move(pages500, `${pages500}.bak`)
+      await fs.writeFile(
+        pages500,
+        `
       const page = () => 'custom 500 page'
       page.getInitialProps = () => ({ a: 'b' })
       export default page
     `
-    )
+      )
 
-    let stderr = ''
-    appPort = await findPort()
-    app = await launchApp(appDir, appPort, {
-      onStderr(msg) {
-        stderr += msg || ''
-      },
-    })
-    await renderViaHTTP(appPort, '/500')
-    await waitFor(1000)
+      let stderr = ''
+      appPort = await findPort()
+      app = await launchApp(appDir, appPort, {
+        turbo: !!turbo,
+        onStderr(msg) {
+          stderr += msg || ''
+        },
+      })
+      await renderViaHTTP(appPort, '/500')
+      await waitFor(1000)
 
-    await killApp(app)
+      await killApp(app)
 
-    await fs.remove(pages500)
-    await fs.move(`${pages500}.bak`, pages500)
+      await fs.remove(pages500)
+      await fs.move(`${pages500}.bak`, pages500)
 
-    expect(stderr).toMatch(gip500Err)
-  })
+      expect(stderr).toMatch(gip500Err)
+    }
+  )
 
   it('does not show error with getStaticProps in pages/500 build', async () => {
     await fs.move(pages500, `${pages500}.bak`)
@@ -491,34 +512,41 @@ describe('500 Page Support', () => {
     expect(code).toBe(0)
   })
 
-  it('does not show error with getStaticProps in pages/500 dev', async () => {
-    await fs.move(pages500, `${pages500}.bak`)
-    await fs.writeFile(
-      pages500,
-      `
+  it.each([
+    ['dev', false],
+    ['turbo', true],
+  ])(
+    'does not show error with getStaticProps in pages/500 dev %s',
+    async (_name, turbo) => {
+      await fs.move(pages500, `${pages500}.bak`)
+      await fs.writeFile(
+        pages500,
+        `
       const page = () => 'custom 500 page'
       export const getStaticProps = () => ({ props: { a: 'b' } })
       export default page
     `
-    )
+      )
 
-    let stderr = ''
-    appPort = await findPort()
-    app = await launchApp(appDir, appPort, {
-      onStderr(msg) {
-        stderr += msg || ''
-      },
-    })
-    await renderViaHTTP(appPort, '/abc')
-    await waitFor(1000)
+      let stderr = ''
+      appPort = await findPort()
+      app = await launchApp(appDir, appPort, {
+        turbo: !!turbo,
+        onStderr(msg) {
+          stderr += msg || ''
+        },
+      })
+      await renderViaHTTP(appPort, '/abc')
+      await waitFor(1000)
 
-    await killApp(app)
+      await killApp(app)
 
-    await fs.remove(pages500)
-    await fs.move(`${pages500}.bak`, pages500)
+      await fs.remove(pages500)
+      await fs.move(`${pages500}.bak`, pages500)
 
-    expect(stderr).not.toMatch(gip500Err)
-  })
+      expect(stderr).not.toMatch(gip500Err)
+    }
+  )
 
   it('shows error with getServerSideProps in pages/500 build', async () => {
     await fs.move(pages500, `${pages500}.bak`)
@@ -539,32 +567,43 @@ describe('500 Page Support', () => {
     expect(code).toBe(1)
   })
 
-  it('shows error with getServerSideProps in pages/500 dev', async () => {
-    await fs.move(pages500, `${pages500}.bak`)
-    await fs.writeFile(
-      pages500,
-      `
+  it.each([
+    ['dev', false],
+    ['turbo', true],
+  ])(
+    'shows error with getServerSideProps in pages/500 %s',
+    async (_name, turbo) => {
+      if (!!turbo && !shouldRunTurboDev) {
+        return
+      }
+
+      await fs.move(pages500, `${pages500}.bak`)
+      await fs.writeFile(
+        pages500,
+        `
       const page = () => 'custom 500 page'
       export const getServerSideProps = () => ({ props: { a: 'b' } })
       export default page
     `
-    )
+      )
 
-    let stderr = ''
-    appPort = await findPort()
-    app = await launchApp(appDir, appPort, {
-      onStderr(msg) {
-        stderr += msg || ''
-      },
-    })
-    await renderViaHTTP(appPort, '/500')
-    await waitFor(1000)
+      let stderr = ''
+      appPort = await findPort()
+      app = await launchApp(appDir, appPort, {
+        turbo: !!turbo,
+        onStderr(msg) {
+          stderr += msg || ''
+        },
+      })
+      await renderViaHTTP(appPort, '/500')
+      await waitFor(1000)
 
-    await killApp(app)
+      await killApp(app)
 
-    await fs.remove(pages500)
-    await fs.move(`${pages500}.bak`, pages500)
+      await fs.remove(pages500)
+      await fs.move(`${pages500}.bak`, pages500)
 
-    expect(stderr).toMatch(gip500Err)
-  })
+      expect(stderr).toMatch(gip500Err)
+    }
+  )
 })

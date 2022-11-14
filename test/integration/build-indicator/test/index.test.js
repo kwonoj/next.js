@@ -3,8 +3,15 @@
 import fs from 'fs-extra'
 import { join } from 'path'
 import webdriver from 'next-webdriver'
-import { findPort, launchApp, killApp, waitFor } from 'next-test-utils'
+import {
+  findPort,
+  launchApp,
+  killApp,
+  waitFor,
+  shouldRunTurboDevTest,
+} from 'next-test-utils'
 
+const shouldRunTurboDev = shouldRunTurboDevTest()
 const appDir = join(__dirname, '..')
 const nextConfig = join(appDir, 'next.config.js')
 let appPort
@@ -24,42 +31,60 @@ const installCheckVisible = (browser) => {
 }
 
 describe('Build Activity Indicator', () => {
-  it('should validate buildActivityPosition config', async () => {
-    let stderr = ''
-    const configPath = join(appDir, 'next.config.js')
-    await fs.writeFile(
-      configPath,
-      `
+  it.each([
+    ['dev', false],
+    ['turbo', true],
+  ])(
+    'should validate buildActivityPosition config %s',
+    async (_name, turbo) => {
+      if (!!turbo && !shouldRunTurboDev) {
+        return
+      }
+
+      let stderr = ''
+      const configPath = join(appDir, 'next.config.js')
+      await fs.writeFile(
+        configPath,
+        `
       module.exports = {
         devIndicators: {
           buildActivityPosition: 'ttop-leff'
         }
       }
     `
-    )
-    const app = await launchApp(appDir, await findPort(), {
-      onStderr(msg) {
-        stderr += msg
-      },
-    }).catch((err) => {
-      console.error('got err', err)
-    })
-    await fs.remove(configPath)
+      )
+      const app = await launchApp(appDir, await findPort(), {
+        turbo: !!turbo,
+        onStderr(msg) {
+          stderr += msg
+        },
+      }).catch((err) => {
+        console.error('got err', err)
+      })
+      await fs.remove(configPath)
 
-    expect(stderr).toContain(
-      `Invalid "devIndicator.buildActivityPosition" provided, expected one of top-left, top-right, bottom-left, bottom-right, received ttop-leff`
-    )
+      expect(stderr).toContain(
+        `Invalid "devIndicator.buildActivityPosition" provided, expected one of top-left, top-right, bottom-left, bottom-right, received ttop-leff`
+      )
 
-    if (app) {
-      await killApp(app)
+      if (app) {
+        await killApp(app)
+      }
     }
-  })
+  )
 
-  describe('Enabled', () => {
+  describe.each([
+    ['dev', false],
+    ['turbo', true],
+  ])('Enabled %s', (_name, turbo) => {
+    if (!!turbo && !shouldRunTurboDev) {
+      return
+    }
+
     beforeAll(async () => {
       await fs.remove(nextConfig)
       appPort = await findPort()
-      app = await launchApp(appDir, appPort)
+      app = await launchApp(appDir, appPort, { turbo })
     })
     afterAll(() => killApp(app))
 
@@ -97,7 +122,14 @@ describe('Build Activity Indicator', () => {
     })
   })
 
-  describe('Disabled with next.config.js', () => {
+  describe.each([
+    ['dev', false],
+    ['turbo', true],
+  ])('Disabled with next.config.js %s', (_name, turbo) => {
+    if (!!turbo && !shouldRunTurboDev) {
+      return
+    }
+
     beforeAll(async () => {
       await fs.writeFile(
         nextConfig,
@@ -105,7 +137,7 @@ describe('Build Activity Indicator', () => {
         'utf8'
       )
       appPort = await findPort()
-      app = await launchApp(appDir, appPort)
+      app = await launchApp(appDir, appPort, { turbo })
     })
     afterAll(async () => {
       await killApp(app)

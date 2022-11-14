@@ -9,18 +9,27 @@ import {
   renderViaHTTP,
   check,
   waitFor,
+  shouldRunTurboDevTest,
 } from 'next-test-utils'
 
+const shouldRunTurboDev = shouldRunTurboDevTest()
 const appDir = join(__dirname, '..')
 const pageFile = new File(join(appDir, 'pages/ssg.js'))
 
 let app
 let appPort
 
-describe('Invalid revalidate values', () => {
+describe.each([
+  ['dev', false],
+  ['turbo', true],
+])('Invalid revalidate values %s', (_name, turbo) => {
+  if (!!turbo && !shouldRunTurboDev) {
+    return
+  }
+
   beforeAll(async () => {
     appPort = await findPort()
-    app = await launchApp(appDir, appPort)
+    app = await launchApp(appDir, appPort, { turbo })
   })
   afterAll(async () => {
     await killApp(app)

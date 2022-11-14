@@ -5,10 +5,12 @@ import {
   nextStart,
   nextBuild,
   launchApp,
+  shouldRunTurboDevTest,
 } from 'next-test-utils'
 import webdriver from 'next-webdriver'
 import { join } from 'path'
 
+const shouldRunTurboDev = shouldRunTurboDevTest()
 const appDir = join(__dirname, '../')
 let appPort
 let app
@@ -39,10 +41,17 @@ describe('Image Component from node_modules prod mode', () => {
   runTests()
 })
 
-describe('Image Component from node_modules dev mode', () => {
+describe.each([
+  ['dev', false],
+  ['turbo', true],
+])('Image Component from node_modules %s mode', (_name, turbo) => {
+  if (!!turbo && !shouldRunTurboDev) {
+    return
+  }
+
   beforeAll(async () => {
     appPort = await findPort()
-    app = await launchApp(appDir, appPort)
+    app = await launchApp(appDir, appPort, { turbo })
   })
   afterAll(async () => {
     await killApp(app)

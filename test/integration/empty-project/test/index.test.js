@@ -2,15 +2,31 @@
 
 import { join } from 'path'
 import fs from 'fs'
-import { fetchViaHTTP, findPort, launchApp, killApp } from 'next-test-utils'
+import {
+  fetchViaHTTP,
+  findPort,
+  launchApp,
+  killApp,
+  shouldRunTurboDevTest,
+} from 'next-test-utils'
 
+const shouldRunTurboDev = shouldRunTurboDevTest()
 const context = {}
 
-describe('Empty Project', () => {
+describe.each([
+  ['dev', false],
+  ['turbo', true],
+])('Empty Project %s', (_name, turbo) => {
+  if (!!turbo && !shouldRunTurboDev) {
+    return
+  }
+
   beforeAll(async () => {
     fs.unlinkSync(join(__dirname, '..', 'pages', '.gitkeep'))
     context.appPort = await findPort()
-    context.server = await launchApp(join(__dirname, '../'), context.appPort)
+    context.server = await launchApp(join(__dirname, '../'), context.appPort, {
+      turbo: !!turbo,
+    })
   })
 
   const fetch = (p, q) => fetchViaHTTP(context.appPort, p, q, { timeout: 5000 })

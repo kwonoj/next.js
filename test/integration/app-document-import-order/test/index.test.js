@@ -11,8 +11,10 @@ import {
   findPort,
   launchApp,
   killApp,
+  shouldRunTurboDevTest,
 } from 'next-test-utils'
 
+const shouldRunTurboDev = shouldRunTurboDevTest()
 const appDir = join(__dirname, '../')
 let appPort
 let server
@@ -77,21 +79,28 @@ describe('Root components import order', () => {
     respectsChunkAttachmentOrder
   )
 
-  describe('on dev server', () => {
+  describe.each([
+    ['dev', false],
+    ['turbo', true],
+  ])('on %s server', (_name, turbo) => {
+    if (!!turbo && !shouldRunTurboDev) {
+      return
+    }
+
     beforeAll(async () => {
       appPort = await findPort()
-      app = await launchApp(join(__dirname, '../'), appPort)
+      app = await launchApp(join(__dirname, '../'), appPort, { turbo: !!turbo })
     })
 
     afterAll(() => killApp(app))
 
     it(
-      'root components should be imported in this order _document > _app > page in order to respect side effects',
+      'root components should be imported in this order _document > _app > page in order to respect side effects %s',
       respectsSideEffects
     )
 
     it(
-      '_app chunks should be attached to de dom before page chunks',
+      '_app chunks should be attached to de dom before page chunks %s',
       respectsChunkAttachmentOrder
     )
   })

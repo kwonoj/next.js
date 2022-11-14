@@ -11,10 +11,12 @@ import {
   nextStart,
   renderViaHTTP,
   waitFor,
+  shouldRunTurboDevTest,
 } from 'next-test-utils'
 import webdriver from 'next-webdriver'
 import { join } from 'path'
 
+const shouldRunTurboDev = shouldRunTurboDevTest()
 const fixturesDir = join(__dirname, '../../css-fixtures')
 
 describe('Basic CSS Module Support', () => {
@@ -191,7 +193,14 @@ describe('Has CSS Module in computed styles in Production', () => {
   })
 })
 
-describe('Can hot reload CSS Module without losing state', () => {
+describe.each([
+  ['dev', false],
+  ['turbo', true],
+])('Can hot reload CSS Module without losing state %s', (_name, turbo) => {
+  if (!!turbo && !shouldRunTurboDev) {
+    return
+  }
+
   const appDir = join(fixturesDir, 'hmr-module')
 
   let appPort
@@ -199,7 +208,7 @@ describe('Can hot reload CSS Module without losing state', () => {
   beforeAll(async () => {
     await remove(join(appDir, '.next'))
     appPort = await findPort()
-    app = await launchApp(appDir, appPort)
+    app = await launchApp(appDir, appPort, { turbo })
   })
   afterAll(async () => {
     await killApp(app)

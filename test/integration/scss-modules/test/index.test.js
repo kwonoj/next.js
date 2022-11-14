@@ -11,10 +11,12 @@ import {
   nextStart,
   renderViaHTTP,
   waitFor,
+  shouldRunTurboDevTest,
 } from 'next-test-utils'
 import webdriver from 'next-webdriver'
 import { join } from 'path'
 
+const shouldRunTurboDev = shouldRunTurboDevTest()
 const fixturesDir = join(__dirname, '../../scss-fixtures')
 
 describe('Basic SCSS Module Support', () => {
@@ -129,7 +131,14 @@ describe('3rd Party CSS Module Support', () => {
   })
 })
 
-describe('Has CSS Module in computed styles in Development', () => {
+describe.each([
+  ['dev', false],
+  ['turbo', true],
+])('Has CSS Module in computed styles in Development %s', (_name, turbo) => {
+  if (!!turbo && !shouldRunTurboDev) {
+    return
+  }
+
   const appDir = join(fixturesDir, 'dev-module')
 
   let appPort
@@ -137,7 +146,7 @@ describe('Has CSS Module in computed styles in Development', () => {
   beforeAll(async () => {
     await remove(join(appDir, '.next'))
     appPort = await findPort()
-    app = await launchApp(appDir, appPort)
+    app = await launchApp(appDir, appPort, { turbo })
   })
   afterAll(async () => {
     await killApp(app)
@@ -187,7 +196,14 @@ describe('Has CSS Module in computed styles in Production', () => {
   })
 })
 
-describe('Can hot reload CSS Module without losing state', () => {
+describe.each([
+  ['dev', false],
+  ['turbo', true],
+])('Can hot reload CSS Module without losing state %s', (_name, turbo) => {
+  if (!!turbo && !shouldRunTurboDev) {
+    return
+  }
+
   const appDir = join(fixturesDir, 'hmr-module')
 
   let appPort
@@ -195,7 +211,7 @@ describe('Can hot reload CSS Module without losing state', () => {
   beforeAll(async () => {
     await remove(join(appDir, '.next'))
     appPort = await findPort()
-    app = await launchApp(appDir, appPort)
+    app = await launchApp(appDir, appPort, { turbo })
   })
   afterAll(async () => {
     await killApp(app)

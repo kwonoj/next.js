@@ -15,9 +15,11 @@ import {
   getPageFileFromBuildManifest,
   getPageFileFromPagesManifest,
   check,
+  shouldRunTurboDevTest,
 } from 'next-test-utils'
 import json from '../big.json'
 
+const shouldRunTurboDev = shouldRunTurboDevTest()
 const appDir = join(__dirname, '../')
 let appPort
 let stderr
@@ -592,11 +594,19 @@ function runTests(dev = false) {
 }
 
 describe('API routes', () => {
-  describe('dev support', () => {
+  describe.each([
+    ['dev', false],
+    ['turbo', true],
+  ])('%s support', (_name, turbo) => {
+    if (!!turbo && !shouldRunTurboDev) {
+      return
+    }
+
     beforeAll(async () => {
       stderr = ''
       appPort = await findPort()
       app = await launchApp(appDir, appPort, {
+        turbo: !!turbo,
         onStderr: (msg) => {
           stderr += msg
         },

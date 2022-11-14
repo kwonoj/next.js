@@ -7,8 +7,10 @@ import {
   launchApp,
   nextBuild,
   killApp,
+  shouldRunTurboDevTest,
 } from 'next-test-utils'
 
+const shouldRunTurboDev = shouldRunTurboDevTest()
 const appDir = join(__dirname, '..')
 let appPort
 let app
@@ -23,11 +25,19 @@ describe('svgo-webpack with Image Component', () => {
     })
   })
 
-  describe('next dev', () => {
+  describe.each([
+    ['dev', false],
+    ['turbo', true],
+  ])('next %s', (_name, turbo) => {
+    if (!!turbo && !shouldRunTurboDev) {
+      return
+    }
+
     beforeAll(async () => {
       devOutput = { stdout: '', stderr: '' }
       appPort = await findPort()
       app = await launchApp(appDir, appPort, {
+        turbo: !!turbo,
         onStdout: (msg) => {
           devOutput.stdout += msg
         },

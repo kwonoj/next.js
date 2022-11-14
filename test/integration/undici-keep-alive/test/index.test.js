@@ -9,9 +9,11 @@ import {
   nextStart,
   launchApp,
   killApp,
+  shouldRunTurboDevTest,
 } from 'next-test-utils'
 import webdriver from 'next-webdriver'
 
+const shouldRunTurboDev = shouldRunTurboDevTest()
 const appDir = join(__dirname, '../')
 
 let appPort
@@ -19,7 +21,14 @@ let app
 let mockServer
 
 describe('undici-keep-alive', () => {
-  describe('dev', () => {
+  describe.each([
+    ['dev', false],
+    ['turbo', true],
+  ])('%s', (_name, turbo) => {
+    if (!!turbo && !shouldRunTurboDev) {
+      return
+    }
+
     beforeAll(async () => {
       mockServer = createServer((req, res) => {
         // we can test request headers by sending them
@@ -29,7 +38,7 @@ describe('undici-keep-alive', () => {
       })
       mockServer.listen(44001)
       appPort = await findPort()
-      app = await launchApp(appDir, appPort)
+      app = await launchApp(appDir, appPort, { turbo })
     })
     afterAll(async () => {
       await killApp(app)

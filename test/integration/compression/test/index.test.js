@@ -7,14 +7,25 @@ import {
   findPort,
   launchApp,
   killApp,
+  shouldRunTurboDevTest,
 } from 'next-test-utils'
 
+const shouldRunTurboDev = shouldRunTurboDevTest()
 const context = {}
 
-describe('Compression', () => {
+describe.each([
+  ['dev', false],
+  ['turbo', true],
+])('Compression %s', (_name, turbo) => {
+  if (!!turbo && !shouldRunTurboDev) {
+    return
+  }
+
   beforeAll(async () => {
     context.appPort = await findPort()
-    context.server = await launchApp(join(__dirname, '../'), context.appPort)
+    context.server = await launchApp(join(__dirname, '../'), context.appPort, {
+      turbo: !!turbo,
+    })
 
     // pre-build page at the start
     await renderViaHTTP(context.appPort, '/')

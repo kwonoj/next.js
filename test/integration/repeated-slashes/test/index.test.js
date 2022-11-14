@@ -17,8 +17,10 @@ import {
   fetchViaHTTP,
   check,
   renderViaHTTP,
+  shouldRunTurboDevTest,
 } from 'next-test-utils'
 
+const shouldRunTurboDev = shouldRunTurboDevTest()
 const appDir = join(__dirname, '../app')
 const outdir = join(appDir, 'out')
 let appPort
@@ -419,10 +421,17 @@ describe('404 handling', () => {
   })
 
   const devStartAndExport = (isPages404) => {
-    describe('next dev', () => {
+    describe.each([
+      ['dev', false],
+      ['turbo', true],
+    ])('next %s', (_name, turbo) => {
+      if (!!turbo && !shouldRunTurboDev) {
+        return
+      }
+
       beforeAll(async () => {
         appPort = await findPort()
-        app = await launchApp(appDir, appPort, nextOpts)
+        app = await launchApp(appDir, appPort, nextOpts, { turbo: !!turbo })
 
         // prebuild pages
         await renderViaHTTP(appPort, '/')

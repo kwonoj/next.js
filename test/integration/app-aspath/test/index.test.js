@@ -9,15 +9,26 @@ import {
   launchApp,
   killApp,
   waitFor,
+  shouldRunTurboDevTest,
 } from 'next-test-utils'
 
 let appPort
 let server
 
-describe('App asPath', () => {
+const shouldRunTurboDev = shouldRunTurboDevTest()
+describe.each([
+  ['dev', false],
+  ['turbo', true],
+])('App asPath %s', (_name, turbo) => {
+  if (!!turbo && !shouldRunTurboDev) {
+    return
+  }
+
   beforeAll(async () => {
     appPort = await findPort()
-    server = await launchApp(join(__dirname, '../'), appPort)
+    server = await launchApp(join(__dirname, '../'), appPort, {
+      turbo: !!turbo,
+    })
 
     // pre-build all pages at the start
     await Promise.all([renderViaHTTP(appPort, '/')])

@@ -7,11 +7,13 @@ import {
   hasRedbox,
   killApp,
   launchApp,
+  shouldRunTurboDevTest,
 } from 'next-test-utils'
 import { join } from 'path'
 import stripAnsi from 'strip-ansi'
 import webdriver from 'next-webdriver'
 
+const shouldRunTurboDev = shouldRunTurboDevTest()
 const context = {
   appDir: join(__dirname, '../'),
   buildLogs: { output: '', stdout: '', stderr: '' },
@@ -20,11 +22,19 @@ const context = {
   page: new File(join(__dirname, '../pages/index.js')),
 }
 
-describe('Middleware development errors', () => {
+describe.each([
+  ['dev', false],
+  ['turbo', true],
+])('Middleware %s errors', (_name, turbo) => {
+  if (!!turbo && !shouldRunTurboDev) {
+    return
+  }
+
   beforeEach(async () => {
     context.logs = { output: '', stdout: '', stderr: '' }
     context.appPort = await findPort()
     context.app = await launchApp(context.appDir, context.appPort, {
+      turbo: !!turbo,
       env: { __NEXT_TEST_WITH_DEVTOOL: 1 },
       onStdout(msg) {
         context.logs.output += msg

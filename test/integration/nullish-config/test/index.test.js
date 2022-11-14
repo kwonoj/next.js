@@ -1,8 +1,15 @@
 /* eslint-env jest */
 import fs from 'fs-extra'
 import { join } from 'path'
-import { launchApp, findPort, nextBuild, killApp } from 'next-test-utils'
+import {
+  launchApp,
+  findPort,
+  nextBuild,
+  killApp,
+  shouldRunTurboDevTest,
+} from 'next-test-utils'
 
+const shouldRunTurboDev = shouldRunTurboDevTest()
 const appDir = join(__dirname, '..')
 const nextConfig = join(appDir, 'next.config.js')
 
@@ -55,11 +62,19 @@ const runTests = () => {
 describe('Nullish configs in next.config.js', () => {
   afterAll(() => fs.remove(nextConfig))
 
-  describe('dev mode', () => {
+  describe.each([
+    ['dev', false],
+    ['turbo', true],
+  ])('%s mode', (_name, turbo) => {
+    if (!!turbo && !shouldRunTurboDev) {
+      return
+    }
+
     beforeAll(() => {
       getStdout = async () => {
         let stdout = ''
         const app = await launchApp(appDir, await findPort(), {
+          turbo: !!turbo,
           onStdout: (msg) => {
             stdout += msg
           },

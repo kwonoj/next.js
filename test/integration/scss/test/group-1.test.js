@@ -12,11 +12,13 @@ import {
   nextStart,
   renderViaHTTP,
   waitFor,
+  shouldRunTurboDevTest,
 } from 'next-test-utils'
 import webdriver from 'next-webdriver'
 import { join } from 'path'
 import { quote as shellQuote } from 'shell-quote'
 
+const shouldRunTurboDev = shouldRunTurboDevTest()
 const fixturesDir = join(__dirname, '../..', 'scss-fixtures')
 
 describe('SCSS Support', () => {
@@ -401,7 +403,14 @@ describe('SCSS Support', () => {
     })
   })
 
-  describe('Can hot reload CSS without losing state', () => {
+  describe.each([
+    ['dev', false],
+    ['turbo', true],
+  ])('Can hot reload CSS without losing state %s', (_name, turbo) => {
+    if (!!turbo && !shouldRunTurboDev) {
+      return
+    }
+
     const appDir = join(fixturesDir, 'multi-page')
 
     beforeAll(async () => {
@@ -412,7 +421,7 @@ describe('SCSS Support', () => {
     let app
     beforeAll(async () => {
       appPort = await findPort()
-      app = await launchApp(appDir, appPort)
+      app = await launchApp(appDir, appPort, { turbo })
     })
     afterAll(async () => {
       await killApp(app)
@@ -459,7 +468,14 @@ describe('SCSS Support', () => {
     })
   })
 
-  describe('Has CSS in computed styles in Development', () => {
+  describe.each([
+    ['dev', false],
+    ['turbo', true],
+  ])('Has CSS in computed styles in Development %s', (_name, turbo) => {
+    if (!!turbo && !shouldRunTurboDev) {
+      return
+    }
+
     const appDir = join(fixturesDir, 'multi-page')
 
     beforeAll(async () => {
@@ -470,7 +486,7 @@ describe('SCSS Support', () => {
     let app
     beforeAll(async () => {
       appPort = await findPort()
-      app = await launchApp(appDir, appPort)
+      app = await launchApp(appDir, appPort, { turbo })
     })
     afterAll(async () => {
       await killApp(app)
@@ -493,7 +509,14 @@ describe('SCSS Support', () => {
     })
   })
 
-  describe('Body is not hidden when unused in Development', () => {
+  describe.each([
+    ['dev', false],
+    ['turbo', true],
+  ])('Body is not hidden when unused in Development %s', (_name, turbo) => {
+    if (!!turbo && !shouldRunTurboDev) {
+      return
+    }
+
     const appDir = join(fixturesDir, 'unused')
 
     beforeAll(async () => {
@@ -504,7 +527,7 @@ describe('SCSS Support', () => {
     let app
     beforeAll(async () => {
       appPort = await findPort()
-      app = await launchApp(appDir, appPort)
+      app = await launchApp(appDir, appPort, { turbo })
     })
     afterAll(async () => {
       await killApp(app)
@@ -526,7 +549,14 @@ describe('SCSS Support', () => {
     })
   })
 
-  describe('Body is not hidden when broken in Development', () => {
+  describe.each([
+    ['dev', false],
+    ['turbo', true],
+  ])('Body is not hidden when broken in Development %s', (_name, turbo) => {
+    if (!!turbo && !shouldRunTurboDev) {
+      return
+    }
+
     const appDir = join(fixturesDir, 'unused')
 
     let appPort
@@ -534,13 +564,13 @@ describe('SCSS Support', () => {
     beforeAll(async () => {
       await remove(join(appDir, '.next'))
       appPort = await findPort()
-      app = await launchApp(appDir, appPort)
+      app = await launchApp(appDir, appPort, { turbo })
     })
     afterAll(async () => {
       await killApp(app)
     })
 
-    it('should have body visible', async () => {
+    it('should have body visible %s', async () => {
       const pageFile = new File(join(appDir, 'pages/index.js'))
       let browser
       try {

@@ -9,9 +9,11 @@ import {
   nextBuild,
   nextStart,
   renderViaHTTP,
+  shouldRunTurboDevTest,
 } from 'next-test-utils'
 import { join } from 'path'
 
+const shouldRunTurboDev = shouldRunTurboDevTest()
 const appDir = join(__dirname, '..')
 const appPage = join(appDir, 'pages/_app.js')
 const indexPage = join(appDir, 'pages/index.js')
@@ -20,11 +22,11 @@ let app
 let appPort
 let indexPageContent
 
-const runTests = (isDev) => {
+const runTests = (isDev, turbo) => {
   const getData = async () => {
     if (isDev) {
       appPort = await findPort()
-      app = await launchApp(appDir, appPort)
+      app = await launchApp(appDir, appPort, { turbo })
     } else {
       const { code } = await nextBuild(appDir)
       if (code !== 0) throw new Error(`build faild, exit code: ${code}`)
@@ -87,8 +89,15 @@ const runTests = (isDev) => {
 }
 
 describe('gip identifiers', () => {
-  describe('dev mode', () => {
-    runTests(true)
+  describe.each([
+    ['dev', false],
+    ['turbo', true],
+  ])('%s mode', (_name, turbo) => {
+    if (!!turbo && !shouldRunTurboDev) {
+      return
+    }
+
+    runTests(true, turbo)
   })
 
   describe('production mode', () => {

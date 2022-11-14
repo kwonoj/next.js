@@ -9,9 +9,12 @@ import {
   nextStart,
   nextBuild,
   fetchViaHTTP,
+  shouldRunTurboDevTest,
 } from 'next-test-utils'
 import webdriver from 'next-webdriver'
 import cheerio from 'cheerio'
+
+const shouldRunTurboDev = shouldRunTurboDevTest()
 
 const appDir = join(__dirname, '../')
 const gip404Err =
@@ -59,13 +62,21 @@ describe('404 Page Support with _app', () => {
     })
   })
 
-  describe('dev mode', () => {
+  describe.each([
+    ['dev', false],
+    ['turbo', true],
+  ])('dev mode %s', (_name, turbo) => {
+    if (!!turbo && !shouldRunTurboDev) {
+      return
+    }
+
     let stderr = ''
     let stdout = ''
 
     beforeAll(async () => {
       appPort = await findPort()
       app = await launchApp(appDir, appPort, {
+        turbo: !!turbo,
         onStderr(msg) {
           stderr += msg
         },

@@ -8,18 +8,28 @@ import {
   getRedboxHeader,
   killApp,
   launchApp,
+  shouldRunTurboDevTest,
 } from 'next-test-utils'
 import webdriver from 'next-webdriver'
 import { join } from 'path'
 
+const shouldRunTurboDev = shouldRunTurboDevTest()
 const appDir = join(__dirname, '..')
 let appPort
 let app
 
-describe('TypeScript HMR', () => {
+describe.each([
+  ['dev', false],
+  ['turbo', true],
+])('TypeScript HMR %s', (_name, turbo) => {
+  if (!!turbo && !shouldRunTurboDev) {
+    return
+  }
+
   beforeAll(async () => {
     appPort = await findPort()
     app = await launchApp(appDir, appPort, {
+      turbo: !!turbo,
       env: {
         __NEXT_TEST_WITH_DEVTOOL: 1,
         // Events can be finicky in CI. This switches to a more reliable

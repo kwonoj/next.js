@@ -11,10 +11,12 @@ import {
   nextBuild,
   nextStart,
   renderViaHTTP,
+  shouldRunTurboDevTest,
 } from 'next-test-utils'
 import webdriver from 'next-webdriver'
 import { join } from 'path'
 
+const shouldRunTurboDev = shouldRunTurboDevTest()
 const fixturesDir = join(__dirname, '../../css-fixtures')
 const appDir = join(fixturesDir, 'multi-module')
 
@@ -220,11 +222,18 @@ describe('CSS Module client-side navigation', () => {
     runTests()
   })
 
-  describe('dev', () => {
+  describe.each([
+    ['dev', false],
+    ['turbo', true],
+  ])('%s', (_name, turbo) => {
+    if (!!turbo && !shouldRunTurboDev) {
+      return
+    }
+
     beforeAll(async () => {
       await remove(join(appDir, '.next'))
       appPort = await findPort()
-      app = await launchApp(appDir, appPort)
+      app = await launchApp(appDir, appPort, { turbo })
     })
     afterAll(async () => {
       await killApp(app)

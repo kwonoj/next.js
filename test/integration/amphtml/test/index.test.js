@@ -13,10 +13,12 @@ import {
   nextStart,
   renderViaHTTP,
   waitFor,
+  shouldRunTurboDevTest,
 } from 'next-test-utils'
 import webdriver from 'next-webdriver'
 import { join } from 'path'
 
+const shouldRunTurboDev = shouldRunTurboDevTest()
 const appDir = join(__dirname, '../')
 let appPort
 let app
@@ -243,7 +245,14 @@ describe('AMP Usage', () => {
     })
   })
 
-  describe('AMP dev no-warn', () => {
+  describe.each([
+    ['dev', false],
+    ['turbo', true],
+  ])('AMP dev no-warn %s', (_name, turbo) => {
+    if (!!turbo && !shouldRunTurboDev) {
+      return
+    }
+
     let dynamicAppPort
     let ampDynamic
 
@@ -251,6 +260,7 @@ describe('AMP Usage', () => {
       let inspectPayload = ''
       dynamicAppPort = await findPort()
       ampDynamic = await launchApp(join(__dirname, '../'), dynamicAppPort, {
+        turbo: !!turbo,
         onStdout(msg) {
           inspectPayload += msg
         },
@@ -267,7 +277,14 @@ describe('AMP Usage', () => {
     })
   })
 
-  describe('AMP dev mode', () => {
+  describe.each([
+    ['dev', false],
+    ['turbo', true],
+  ])('AMP dev mode %s', (_name, turbo) => {
+    if (!!turbo && !shouldRunTurboDev) {
+      return
+    }
+
     let dynamicAppPort
     let ampDynamic
     let output = ''
@@ -275,6 +292,7 @@ describe('AMP Usage', () => {
     beforeAll(async () => {
       dynamicAppPort = await findPort()
       ampDynamic = await launchApp(join(__dirname, '../'), dynamicAppPort, {
+        turbo: !!turbo,
         onStdout(msg) {
           output += msg
         },
@@ -522,6 +540,7 @@ describe('AMP Usage', () => {
       let inspectPayload = ''
       dynamicAppPort = await findPort()
       ampDynamic = await launchApp(join(__dirname, '../'), dynamicAppPort, {
+        turbo: !!turbo,
         onStdout(msg) {
           inspectPayload += msg
         },

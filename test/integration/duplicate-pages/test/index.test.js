@@ -8,8 +8,10 @@ import {
   launchApp,
   renderViaHTTP,
   killApp,
+  shouldRunTurboDevTest,
 } from 'next-test-utils'
 
+const shouldRunTurboDev = shouldRunTurboDevTest()
 const appDir = path.join(__dirname, '..')
 
 describe('Handles Duplicate Pages', () => {
@@ -20,7 +22,14 @@ describe('Handles Duplicate Pages', () => {
     })
   })
 
-  describe('dev mode', () => {
+  describe.each([
+    ['dev', false],
+    ['turbo', true],
+  ])('%s mode', (_name, turbo) => {
+    if (!!turbo && !shouldRunTurboDev) {
+      return
+    }
+
     it('Shows warning in development', async () => {
       let output
       const handleOutput = (msg) => {
@@ -28,6 +37,7 @@ describe('Handles Duplicate Pages', () => {
       }
       const appPort = await findPort()
       const app = await launchApp(appDir, appPort, {
+        turbo: !!turbo,
         onStdout: handleOutput,
         onStderr: handleOutput,
       })

@@ -7,11 +7,13 @@ import {
   nextBuild,
   runNextCommand,
   runNextCommandDev,
+  shouldRunTurboDevTest,
 } from 'next-test-utils'
 import { join } from 'path'
 import pkg from 'next/package'
 import http from 'http'
 
+const shouldRunTurboDev = shouldRunTurboDevTest()
 const dir = join(__dirname, '..')
 const dirDuplicateSass = join(__dirname, '../duplicate-sass')
 
@@ -224,7 +226,14 @@ describe('CLI Usage', () => {
       expect(output).toMatch(new RegExp(`http://localhost:${port}`))
     })
 
-    test('-p conflict', async () => {
+    test.each([
+      ['dev', false],
+      ['turbo', true],
+    ])('-p conflict %', async (_name, turbo) => {
+      if (!!turbo && !shouldRunTurboDev) {
+        return
+      }
+
       const port = await findPort()
 
       let app = http.createServer((_, res) => {
@@ -240,6 +249,7 @@ describe('CLI Usage', () => {
       let stdout = '',
         stderr = ''
       await launchApp(dir, port, {
+        turbo: !!turbo,
         stdout: true,
         stderr: true,
         onStdout(msg) {
@@ -359,11 +369,19 @@ describe('CLI Usage', () => {
       expect(stderr).not.toContain('UnhandledPromiseRejectionWarning')
     })
 
-    test('duplicate sass deps', async () => {
+    test.each([
+      ['dev', false],
+      ['turbo', true],
+    ])('duplicate sass deps %s', async (_name, turbo) => {
+      if (!!turbo && !shouldRunTurboDev) {
+        return
+      }
+
       const port = await findPort()
 
       let stderr = ''
       let instance = await launchApp(dirDuplicateSass, port, {
+        turbo: !!turbo,
         stderr: true,
         onStderr(msg) {
           stderr += msg

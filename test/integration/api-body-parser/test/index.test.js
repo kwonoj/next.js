@@ -7,9 +7,11 @@ import {
   launchApp,
   fetchViaHTTP,
   initNextServerScript,
+  shouldRunTurboDevTest,
 } from 'next-test-utils'
 import getPort from 'get-port'
 
+const shouldRunTurboDev = shouldRunTurboDevTest()
 const appDir = join(__dirname, '../')
 let appPort
 
@@ -19,9 +21,16 @@ let server
 const context = {}
 
 function runTests() {
-  it('should parse JSON body', async () => {
+  it.each([
+    ['dev', false],
+    ['turbo', true],
+  ])('should parse JSON body %s', async (_name, turbo) => {
+    if (!!turbo && !shouldRunTurboDev) {
+      return
+    }
+
     appPort = await findPort()
-    app = await launchApp(appDir, appPort, {})
+    app = await launchApp(appDir, appPort, { turbo })
     const data = await makeRequest()
     expect(data).toEqual([{ title: 'Nextjs' }])
     killApp(app)

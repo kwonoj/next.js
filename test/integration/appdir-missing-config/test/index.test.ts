@@ -8,8 +8,10 @@ import {
   launchApp,
   nextBuild,
   waitFor,
+  shouldRunTurboDevTest,
 } from 'next-test-utils'
 
+const shouldRunTurboDev = shouldRunTurboDevTest()
 const dir = path.join(__dirname, '..')
 const nextConfig = path.join(dir, 'next.config.js')
 const pagesIndex = path.join(dir, 'pages', 'index.js')
@@ -48,13 +50,21 @@ function runTests(justPutIt: () => Promise<string>) {
 }
 
 describe('Error when app dir is present without experimental.appDir', () => {
-  describe('next dev', () => {
+  describe.each([
+    ['dev', false],
+    ['turbo', true],
+  ])('next %s', (_name, turbo) => {
+    if (!!turbo && !shouldRunTurboDev) {
+      return
+    }
+
     const justPutIt = async () => {
       let app
       try {
         const appPort = await findPort()
         let output = ''
         app = await launchApp(dir, appPort, {
+          turbo: !!turbo,
           onStdout(data: string) {
             output += data
           },

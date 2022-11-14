@@ -12,12 +12,14 @@ import {
   getRedboxHeader,
   runDevSuite,
   runProdSuite,
+  shouldRunTurboDevTest,
 } from 'next-test-utils'
 import concurrent from './concurrent'
 import basics from './basics'
 import strictMode from './strict-mode'
 import webdriver from 'next-webdriver'
 
+const shouldRunTurboDev = shouldRunTurboDevTest()
 const appDir = join(__dirname, '../app')
 const nextConfig = new File(join(appDir, 'next.config.js'))
 const invalidPage = new File(join(appDir, 'pages/invalid.js'))
@@ -28,13 +30,22 @@ describe('Basics', () => {
 })
 
 // React 18 with Strict Mode enabled might cause double invocation of lifecycle methods.
-describe('Strict mode - dev', () => {
+describe.each([
+  ['dev', false],
+  ['turbo', true],
+])('Strict mode - %s', (_name, turbo) => {
+  if (!!turbo && !shouldRunTurboDev) {
+    return
+  }
+
   const context = { appDir }
 
   beforeAll(async () => {
     nextConfig.replace('// reactStrictMode: true,', 'reactStrictMode: true,')
     context.appPort = await findPort()
-    context.server = await launchApp(context.appDir, context.appPort)
+    context.server = await launchApp(context.appDir, context.appPort, {
+      turbo: !!turbo,
+    })
   })
 
   afterAll(() => {

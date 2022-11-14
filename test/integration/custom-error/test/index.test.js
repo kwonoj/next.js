@@ -9,8 +9,10 @@ import {
   nextStart,
   killApp,
   launchApp,
+  shouldRunTurboDevTest,
 } from 'next-test-utils'
 
+const shouldRunTurboDev = shouldRunTurboDevTest()
 const appDir = join(__dirname, '..')
 const page404 = join(appDir, 'pages/404.js')
 let appPort
@@ -27,12 +29,20 @@ const customErrNo404Match =
   /You have added a custom \/_error page without a custom \/404 page/
 
 describe('Custom _error', () => {
-  describe('dev mode 1', () => {
+  describe.each([
+    ['dev', false],
+    ['turbo', true],
+  ])('%s mode 1', (_name, turbo) => {
+    if (!!turbo && !shouldRunTurboDev) {
+      return
+    }
+
     let stderr = ''
 
     beforeAll(async () => {
       appPort = await findPort()
       app = await launchApp(appDir, appPort, {
+        turbo: !!turbo,
         onStderr(msg) {
           stderr += msg || ''
         },
@@ -50,12 +60,20 @@ describe('Custom _error', () => {
     })
   })
 
-  describe('dev mode 2', () => {
+  describe.each([
+    ['dev', false],
+    ['turbo', true],
+  ])('%s mode 2', (_name, turbo) => {
+    if (!!turbo && !shouldRunTurboDev) {
+      return
+    }
+
     let stderr = ''
 
     beforeAll(async () => {
       appPort = await findPort()
       app = await launchApp(appDir, appPort, {
+        turbo: !!turbo,
         onStderr(msg) {
           stderr += msg || ''
         },

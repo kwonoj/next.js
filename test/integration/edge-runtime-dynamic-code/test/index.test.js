@@ -10,6 +10,7 @@ import {
   nextBuild,
   renderViaHTTP,
   waitFor,
+  shouldRunTurboDevTest,
 } from 'next-test-utils'
 
 const EVAL_ERROR = `Dynamic Code Evaluation (e. g. 'eval', 'new Function') not allowed in Edge Runtime`
@@ -18,16 +19,26 @@ const WASM_COMPILE_ERROR = `Dynamic WASM code generation (e. g. 'WebAssembly.com
 const WASM_INSTANTIATE_ERROR = `Dynamic WASM code generation ('WebAssembly.instantiate' with a buffer parameter) not allowed in Edge Runtime`
 
 jest.setTimeout(1000 * 60 * 2)
+
+const shouldRunTurboDev = shouldRunTurboDevTest()
 const context = {
   appDir: join(__dirname, '../'),
 }
 
-describe('Page using eval in dev mode', () => {
+describe.each([
+  ['dev', false],
+  ['turbo', true],
+])('Page using eval in %s mode', (_name, turbo) => {
+  if (!!turbo && !shouldRunTurboDev) {
+    return
+  }
+
   let output = ''
 
   beforeAll(async () => {
     context.appPort = await findPort()
     context.app = await launchApp(context.appDir, context.appPort, {
+      turbo: !!turbo,
       env: { __NEXT_TEST_WITH_DEVTOOL: 1 },
       onStdout(msg) {
         output += msg
@@ -74,12 +85,20 @@ describe.each([
 ])(
   '$title usage of dynamic code evaluation',
   ({ extractValue, computeRoute }) => {
-    describe('dev mode', () => {
+    describe.each([
+      ['dev', false],
+      ['turbo', true],
+    ])('%s mode', (_name, turbo) => {
+      if (!!turbo && !shouldRunTurboDev) {
+        return
+      }
+
       let output = ''
 
       beforeAll(async () => {
         context.appPort = await findPort()
         context.app = await launchApp(context.appDir, context.appPort, {
+          turbo: !!turbo,
           env: { __NEXT_TEST_WITH_DEVTOOL: 1 },
           onStdout(msg) {
             output += msg

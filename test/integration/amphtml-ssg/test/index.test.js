@@ -12,8 +12,10 @@ import {
   killApp,
   nextStart,
   nextExport,
+  shouldRunTurboDevTest,
 } from 'next-test-utils'
 
+const shouldRunTurboDev = shouldRunTurboDevTest()
 const appDir = join(__dirname, '../')
 let builtServerPagesDir
 let appPort
@@ -109,10 +111,17 @@ describe('AMP SSG Support', () => {
     afterAll(() => killApp(app))
     runTests()
   })
-  describe('dev mode', () => {
+  describe.each([
+    ['dev', false],
+    ['turbo', true],
+  ])('dev mode %s', (_name, turbo) => {
+    if (!!turbo && !shouldRunTurboDev) {
+      return
+    }
+
     beforeAll(async () => {
       appPort = await findPort()
-      app = await launchApp(appDir, appPort)
+      app = await launchApp(appDir, appPort, { turbo })
     })
     afterAll(() => killApp(app))
     runTests(true)

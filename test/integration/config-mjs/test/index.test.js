@@ -1,14 +1,28 @@
 /* eslint-env jest */
 
 import cheerio from 'cheerio'
-import { findPort, killApp, launchApp, renderViaHTTP } from 'next-test-utils'
+import {
+  findPort,
+  killApp,
+  launchApp,
+  renderViaHTTP,
+  shouldRunTurboDevTest,
+} from 'next-test-utils'
 import webdriver from 'next-webdriver'
 import fetch from 'node-fetch'
 import { join } from 'path'
 
+const shouldRunTurboDev = shouldRunTurboDevTest()
 const context = {}
 
-describe('Configuration', () => {
+describe.each([
+  ['dev', false],
+  ['turbo', true],
+])('Configuration %s', (_name, turbo) => {
+  if (!!turbo && !shouldRunTurboDev) {
+    return
+  }
+
   beforeAll(async () => {
     context.output = ''
 
@@ -18,6 +32,7 @@ describe('Configuration', () => {
 
     context.appPort = await findPort()
     context.server = await launchApp(join(__dirname, '../'), context.appPort, {
+      turbo: !!turbo,
       env: {
         NODE_OPTIONS: '--inspect',
       },

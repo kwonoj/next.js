@@ -11,8 +11,10 @@ import {
   findPort,
   launchApp,
   killApp,
+  shouldRunTurboDevTest,
 } from 'next-test-utils'
 
+const shouldRunTurboDev = shouldRunTurboDevTest()
 const appDir = join(__dirname, '../')
 let server
 let app
@@ -58,12 +60,21 @@ describe('Optimized loading', () => {
     runTests('/page1')
   })
 
-  describe('dev mode', () => {
+  describe.each([
+    ['dev', false],
+    ['turbo', true],
+  ])('%s mode', (_name, turbo) => {
+    if (!!turbo && !shouldRunTurboDev) {
+      return
+    }
+
     let app
 
     beforeAll(async () => {
       context.appPort = await findPort()
-      app = await launchApp(join(__dirname, '../'), context.appPort)
+      app = await launchApp(join(__dirname, '../'), context.appPort, {
+        turbo: !!turbo,
+      })
     })
 
     afterAll(() => killApp(app))

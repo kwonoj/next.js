@@ -8,8 +8,10 @@ import {
   launchApp,
   nextBuild,
   killApp,
+  shouldRunTurboDevTest,
 } from 'next-test-utils'
 
+const shouldRunTurboDev = shouldRunTurboDevTest()
 const appDir = join(__dirname, '..')
 const nextConfig = join(appDir, 'next.config.js')
 let appPort
@@ -47,11 +49,19 @@ describe('TypeScript Image Component', () => {
     })
   })
 
-  describe('next dev', () => {
+  describe.each([
+    ['dev', false],
+    ['turbo', true],
+  ])('next %s', (_name, turbo) => {
+    if (!!turbo && !shouldRunTurboDev) {
+      return
+    }
+
     beforeAll(async () => {
       output = ''
       appPort = await findPort()
       app = await launchApp(appDir, appPort, {
+        turbo: !!turbo,
         onStdout: handleOutput,
         onStderr: handleOutput,
       })
@@ -75,16 +85,26 @@ describe('TypeScript Image Component', () => {
     })
   })
 
-  it('should remove global image types when disabled (dev)', async () => {
-    const content = await fs.readFile(nextConfig, 'utf8')
-    await fs.writeFile(
-      nextConfig,
-      content.replace('// disableStaticImages', 'disableStaticImages')
-    )
-    const app = await launchApp(appDir, await findPort(), [])
-    await killApp(app)
-    await fs.writeFile(nextConfig, content)
-    const envTypes = await fs.readFile(join(appDir, 'next-env.d.ts'), 'utf8')
-    expect(envTypes).not.toContain('image-types/global')
-  })
+  it.each([
+    ['dev', false],
+    ['turbo', true],
+  ])(
+    'should remove global image types when disabled (%s)',
+    async (_name, turbo) => {
+      if (!!turbo && !shouldRunTurboDev) {
+        return
+      }
+
+      const content = await fs.readFile(nextConfig, 'utf8')
+      await fs.writeFile(
+        nextConfig,
+        content.replace('// disableStaticImages', 'disableStaticImages')
+      )
+      const app = await launchApp(appDir, await findPort(), { turbo: !!turbo })
+      await killApp(app)
+      await fs.writeFile(nextConfig, content)
+      const envTypes = await fs.readFile(join(appDir, 'next-env.d.ts'), 'utf8')
+      expect(envTypes).not.toContain('image-types/global')
+    }
+  )
 })

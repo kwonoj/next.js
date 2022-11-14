@@ -8,19 +8,22 @@ import {
   launchApp,
   check,
   renderViaHTTP,
+  shouldRunTurboDevTest,
 } from 'next-test-utils'
 
+const shouldRunTurboDev = shouldRunTurboDevTest()
 const appDir = join(__dirname, '..')
 const docPath = join(appDir, 'pages/_document.js')
 let appPort
 let app
 
-const checkMissing = async (missing = [], docContent) => {
+const checkMissing = async (missing = [], docContent, turbo) => {
   await fs.writeFile(docPath, docContent)
   let stderr = ''
 
   appPort = await findPort()
   app = await launchApp(appDir, appPort, {
+    turbo: !!turbo,
     onStderr(msg) {
       stderr += msg || ''
     },
@@ -35,7 +38,14 @@ const checkMissing = async (missing = [], docContent) => {
   await fs.remove(docPath)
 }
 
-describe('Missing _document components error', () => {
+describe.each([
+  ['dev', false],
+  ['turbo', true],
+])('Missing _document components error %s', (_name, turbo) => {
+  if (!!turbo && !shouldRunTurboDev) {
+    return
+  }
+
   it('should detect missing Html component', async () => {
     await checkMissing(
       ['<Html />'],
@@ -57,7 +67,8 @@ describe('Missing _document components error', () => {
       }
 
       export default MyDocument
-    `
+    `,
+      turbo
     )
   })
 
@@ -81,7 +92,8 @@ describe('Missing _document components error', () => {
       }
 
       export default MyDocument
-    `
+    `,
+      turbo
     )
   })
 
@@ -105,7 +117,8 @@ describe('Missing _document components error', () => {
       }
 
       export default MyDocument
-    `
+    `,
+      turbo
     )
   })
 
@@ -128,7 +141,8 @@ describe('Missing _document components error', () => {
       }
 
       export default MyDocument
-    `
+    `,
+      turbo
     )
   })
 
@@ -151,7 +165,8 @@ describe('Missing _document components error', () => {
       }
 
       export default MyDocument
-    `
+    `,
+      turbo
     )
   })
 })

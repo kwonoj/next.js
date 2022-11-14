@@ -2,8 +2,14 @@
 
 import fs from 'fs-extra'
 import { join } from 'path'
-import { launchApp, findPort, nextBuild } from 'next-test-utils'
+import {
+  launchApp,
+  findPort,
+  nextBuild,
+  shouldRunTurboDevTest,
+} from 'next-test-utils'
 
+const shouldRunTurboDev = shouldRunTurboDevTest()
 let appDir = join(__dirname, '..')
 const nextConfigPath = join(appDir, 'next.config.js')
 
@@ -579,11 +585,19 @@ const runTests = () => {
 describe('Errors on invalid custom routes', () => {
   afterAll(() => fs.remove(nextConfigPath))
 
-  describe('dev mode', () => {
+  describe.each([
+    ['dev', false],
+    ['turbo', true],
+  ])('%s mode', (_name, turbo) => {
+    if (!!turbo && !shouldRunTurboDev) {
+      return
+    }
+
     beforeAll(() => {
       getStderr = async () => {
         let stderr = ''
         await launchApp(appDir, await findPort(), {
+          turbo: !!turbo,
           onStderr: (msg) => {
             stderr += msg
           },

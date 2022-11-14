@@ -8,8 +8,10 @@ import {
   launchApp,
   renderViaHTTP,
   killApp,
+  shouldRunTurboDevTest,
 } from 'next-test-utils'
 
+const shouldRunTurboDev = shouldRunTurboDevTest()
 const appDir = path.join(__dirname, '..')
 
 describe('Handles Webpack Require Hook', () => {
@@ -26,19 +28,30 @@ describe('Handles Webpack Require Hook', () => {
   })
 
   describe('dev mode', () => {
-    it('Applies and does not error during development', async () => {
-      let output
-      const handleOutput = (msg) => {
-        output += msg
+    it.each([
+      ['dev', false],
+      ['turbo', true],
+    ])(
+      'Applies and does not error during development %s',
+      async (_name, turbo) => {
+        if (!!turbo && !shouldRunTurboDev) {
+          return
+        }
+
+        let output
+        const handleOutput = (msg) => {
+          output += msg
+        }
+        const appPort = await findPort()
+        const app = await launchApp(appDir, appPort, {
+          turbo: !!turbo,
+          onStdout: handleOutput,
+          onStderr: handleOutput,
+        })
+        await renderViaHTTP(appPort, '/')
+        await killApp(app)
+        expect(output).toMatch(/Initialized config/)
       }
-      const appPort = await findPort()
-      const app = await launchApp(appDir, appPort, {
-        onStdout: handleOutput,
-        onStderr: handleOutput,
-      })
-      await renderViaHTTP(appPort, '/')
-      await killApp(app)
-      expect(output).toMatch(/Initialized config/)
-    })
+    )
   })
 })

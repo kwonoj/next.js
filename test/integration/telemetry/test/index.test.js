@@ -12,8 +12,10 @@ import {
   nextLint,
   check,
   findAllTelemetryEvents,
+  shouldRunTurboDevTest,
 } from 'next-test-utils'
 
+const shouldRunTurboDev = shouldRunTurboDevTest()
 const appDir = path.join(__dirname, '..')
 
 describe('Telemetry CLI', () => {
@@ -341,7 +343,14 @@ describe('Telemetry CLI', () => {
     expect(event1).toMatch(/"edgeRuntimePagesCount": 2/)
   })
 
-  it('detects isSrcDir dir correctly for `next dev`', async () => {
+  it.each([
+    ['dev', false],
+    ['turbo', true],
+  ])('detects isSrcDir dir correctly for `next dev`', async (_name, turbo) => {
+    if (!!turbo && !shouldRunTurboDev) {
+      return
+    }
+
     let port = await findPort()
     let stderr = ''
 
@@ -349,6 +358,7 @@ describe('Telemetry CLI', () => {
       stderr += msg
     }
     let app = await launchApp(appDir, port, {
+      turbo: !!turbo,
       onStderr: handleStderr,
       env: {
         NEXT_TELEMETRY_DEBUG: 1,
@@ -658,78 +668,89 @@ describe('Telemetry CLI', () => {
     expect(event1).toMatch(/"middlewareCount": 0/)
   })
 
-  it('detects i18n and image configs for session start', async () => {
-    await fs.rename(
-      path.join(appDir, 'next.config.i18n-images'),
-      path.join(appDir, 'next.config.js')
-    )
+  it.each([
+    ['dev', false],
+    ['turbo', true],
+  ])(
+    'detects i18n and image configs for session start %s',
+    async (_name, turbo) => {
+      if (!!turbo && !shouldRunTurboDev) {
+        return
+      }
 
-    const { stderr } = await nextBuild(appDir, [], {
-      stderr: true,
-      env: { NEXT_TELEMETRY_DEBUG: 1 },
-    })
+      await fs.rename(
+        path.join(appDir, 'next.config.i18n-images'),
+        path.join(appDir, 'next.config.js')
+      )
 
-    await fs.rename(
-      path.join(appDir, 'next.config.js'),
-      path.join(appDir, 'next.config.i18n-images')
-    )
+      const { stderr } = await nextBuild(appDir, [], {
+        stderr: true,
+        env: { NEXT_TELEMETRY_DEBUG: 1 },
+      })
 
-    const event1 = /NEXT_CLI_SESSION_STARTED[\s\S]+?{([\s\S]+?)}/
-      .exec(stderr)
-      .pop()
+      await fs.rename(
+        path.join(appDir, 'next.config.js'),
+        path.join(appDir, 'next.config.i18n-images')
+      )
 
-    expect(event1).toMatch(/"i18nEnabled": true/)
-    expect(event1).toMatch(/"locales": "en,nl,fr"/)
-    expect(event1).toMatch(/"localeDomainsCount": 2/)
-    expect(event1).toMatch(/"localeDetectionEnabled": true/)
-    expect(event1).toMatch(/"imageEnabled": true/)
-    expect(event1).toMatch(/"imageFutureEnabled": true/)
-    expect(event1).toMatch(/"imageDomainsCount": 2/)
-    expect(event1).toMatch(/"imageRemotePatternsCount": 1/)
-    expect(event1).toMatch(/"imageSizes": "64,128,256,512,1024"/)
-    expect(event1).toMatch(/"imageFormats": "image\/avif,image\/webp"/)
-    expect(event1).toMatch(/"trailingSlashEnabled": false/)
-    expect(event1).toMatch(/"reactStrictMode": false/)
-    expect(event1).toMatch(/"turboFlag": false/)
-    expect(event1).toMatch(/"pagesDir": true/)
-    expect(event1).toMatch(/"appDir": false/)
+      const event1 = /NEXT_CLI_SESSION_STARTED[\s\S]+?{([\s\S]+?)}/
+        .exec(stderr)
+        .pop()
 
-    await fs.rename(
-      path.join(appDir, 'next.config.i18n-images'),
-      path.join(appDir, 'next.config.js')
-    )
+      expect(event1).toMatch(/"i18nEnabled": true/)
+      expect(event1).toMatch(/"locales": "en,nl,fr"/)
+      expect(event1).toMatch(/"localeDomainsCount": 2/)
+      expect(event1).toMatch(/"localeDetectionEnabled": true/)
+      expect(event1).toMatch(/"imageEnabled": true/)
+      expect(event1).toMatch(/"imageFutureEnabled": true/)
+      expect(event1).toMatch(/"imageDomainsCount": 2/)
+      expect(event1).toMatch(/"imageRemotePatternsCount": 1/)
+      expect(event1).toMatch(/"imageSizes": "64,128,256,512,1024"/)
+      expect(event1).toMatch(/"imageFormats": "image\/avif,image\/webp"/)
+      expect(event1).toMatch(/"trailingSlashEnabled": false/)
+      expect(event1).toMatch(/"reactStrictMode": false/)
+      expect(event1).toMatch(/"turboFlag": false/)
+      expect(event1).toMatch(/"pagesDir": true/)
+      expect(event1).toMatch(/"appDir": false/)
 
-    let stderr2 = ''
+      await fs.rename(
+        path.join(appDir, 'next.config.i18n-images'),
+        path.join(appDir, 'next.config.js')
+      )
 
-    let app = await launchApp(appDir, await findPort(), {
-      onStderr(msg) {
-        stderr2 += msg || ''
-      },
-      env: {
-        NEXT_TELEMETRY_DEBUG: 1,
-      },
-    })
-    await waitFor(1000)
-    await killApp(app)
+      let stderr2 = ''
 
-    await fs.rename(
-      path.join(appDir, 'next.config.js'),
-      path.join(appDir, 'next.config.i18n-images')
-    )
+      let app = await launchApp(appDir, await findPort(), {
+        turbo: !!turbo,
+        onStderr(msg) {
+          stderr2 += msg || ''
+        },
+        env: {
+          NEXT_TELEMETRY_DEBUG: 1,
+        },
+      })
+      await waitFor(1000)
+      await killApp(app)
 
-    const event2 = /NEXT_CLI_SESSION_STARTED[\s\S]+?{([\s\S]+?)}/
-      .exec(stderr2)
-      .pop()
-    expect(event2).toMatch(/"i18nEnabled": true/)
-    expect(event2).toMatch(/"locales": "en,nl,fr"/)
-    expect(event2).toMatch(/"localeDomainsCount": 2/)
-    expect(event2).toMatch(/"localeDetectionEnabled": true/)
-    expect(event2).toMatch(/"imageDomainsCount": 2/)
-    expect(event2).toMatch(/"imageRemotePatternsCount": 1/)
-    expect(event2).toMatch(/"imageSizes": "64,128,256,512,1024"/)
-    expect(event2).toMatch(/"trailingSlashEnabled": false/)
-    expect(event2).toMatch(/"reactStrictMode": false/)
-  })
+      await fs.rename(
+        path.join(appDir, 'next.config.js'),
+        path.join(appDir, 'next.config.i18n-images')
+      )
+
+      const event2 = /NEXT_CLI_SESSION_STARTED[\s\S]+?{([\s\S]+?)}/
+        .exec(stderr2)
+        .pop()
+      expect(event2).toMatch(/"i18nEnabled": true/)
+      expect(event2).toMatch(/"locales": "en,nl,fr"/)
+      expect(event2).toMatch(/"localeDomainsCount": 2/)
+      expect(event2).toMatch(/"localeDetectionEnabled": true/)
+      expect(event2).toMatch(/"imageDomainsCount": 2/)
+      expect(event2).toMatch(/"imageRemotePatternsCount": 1/)
+      expect(event2).toMatch(/"imageSizes": "64,128,256,512,1024"/)
+      expect(event2).toMatch(/"trailingSlashEnabled": false/)
+      expect(event2).toMatch(/"reactStrictMode": false/)
+    }
+  )
 
   it('emits telemetry for lint during build', async () => {
     await fs.writeFile(

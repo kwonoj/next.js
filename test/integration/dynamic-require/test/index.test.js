@@ -1,15 +1,31 @@
 /* eslint-env jest */
 
 import { join } from 'path'
-import { renderViaHTTP, launchApp, findPort, killApp } from 'next-test-utils'
+import {
+  renderViaHTTP,
+  launchApp,
+  findPort,
+  killApp,
+  shouldRunTurboDevTest,
+} from 'next-test-utils'
 
+const shouldRunTurboDev = shouldRunTurboDevTest()
 let server
 let appPort
 
-describe('Dynamic require', () => {
+describe.each([
+  ['dev', false],
+  ['turbo', true],
+])('Dynamic require %s', (_name, turbo) => {
+  if (!!turbo && !shouldRunTurboDev) {
+    return
+  }
+
   beforeAll(async () => {
     appPort = await findPort()
-    server = await launchApp(join(__dirname, '../'), appPort)
+    server = await launchApp(join(__dirname, '../'), appPort, {
+      turbo: !!turbo,
+    })
   })
   afterAll(() => killApp(server))
 

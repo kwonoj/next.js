@@ -11,6 +11,7 @@ import {
   findPort,
   renderViaHTTP,
   File,
+  shouldRunTurboDevTest,
 } from 'next-test-utils'
 
 import ssr from './ssr'
@@ -29,13 +30,21 @@ context.appDir = appDir
 const devContext = {}
 const nextConfig = new File(join(appDir, 'next.config.js'))
 
+const shouldRunTurboDev = shouldRunTurboDevTest()
 const fileExist = (path) =>
   access(path)
     .then(() => stat(path))
     .then((stats) => (stats.isFile() ? true : false))
     .catch(() => false)
 
-describe('Static Export', () => {
+describe.each([
+  ['dev', false],
+  ['turbo', true],
+])('Static Export %s', (_name, turbo) => {
+  if (!!turbo && !shouldRunTurboDev) {
+    return
+  }
+
   it('should delete existing exported files', async () => {
     const tempfile = join(outdir, 'temp.txt')
 
@@ -75,7 +84,7 @@ describe('Static Export', () => {
     devContext.server = await launchApp(
       join(__dirname, '../'),
       devContext.port,
-      true
+      { turbo: !!turbo }
     )
 
     // pre-build all pages at the start

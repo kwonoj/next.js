@@ -5,21 +5,31 @@ import {
   killApp,
   launchApp,
   retry,
+  shouldRunTurboDevTest,
 } from 'next-test-utils'
 import { join } from 'path'
 import webdriver from 'next-webdriver'
 
+const shouldRunTurboDev = shouldRunTurboDevTest()
 const context = {
   appDir: join(__dirname, '../'),
   logs: { output: '', stdout: '', stderr: '' },
   middleware: new File(join(__dirname, '../middleware.js')),
 }
 
-describe('Middleware development errors', () => {
+describe.each([
+  ['dev', false],
+  ['turbo', true],
+])('Middleware %s errors', (_name, turbo) => {
+  if (!!turbo && !shouldRunTurboDev) {
+    return
+  }
+
   beforeEach(async () => {
     context.logs = { output: '', stdout: '', stderr: '' }
     context.appPort = await findPort()
     context.app = await launchApp(context.appDir, context.appPort, {
+      turbo: !!turbo,
       onStdout(msg) {
         context.logs.output += msg
         context.logs.stdout += msg

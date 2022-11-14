@@ -11,8 +11,10 @@ import {
   fetchViaHTTP,
   File,
   launchApp,
+  shouldRunTurboDevTest,
 } from 'next-test-utils'
 
+const shouldRunTurboDev = shouldRunTurboDevTest()
 const appDir = join(__dirname, '../')
 const nextConfig = new File(join(appDir, 'next.config.js'))
 const ctx = {
@@ -34,7 +36,14 @@ describe('i18n Support basePath', () => {
     })
   })
 
-  describe('dev mode', () => {
+  describe.each([
+    ['dev', false],
+    ['turbo', true],
+  ])('%s mode', (_name, turbo) => {
+    if (!!turbo && !shouldRunTurboDev) {
+      return
+    }
+
     const curCtx = {
       ...ctx,
       isDev: true,
@@ -43,7 +52,7 @@ describe('i18n Support basePath', () => {
       nextConfig.replace(/__EXTERNAL_PORT__/g, ctx.externalPort)
       await fs.remove(join(appDir, '.next'))
       curCtx.appPort = await findPort()
-      curCtx.app = await launchApp(appDir, curCtx.appPort)
+      curCtx.app = await launchApp(appDir, curCtx.appPort, { turbo: !!turbo })
     })
     afterAll(async () => {
       nextConfig.restore()

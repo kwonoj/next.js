@@ -10,8 +10,10 @@ import {
   launchApp,
   killApp,
   File,
+  shouldRunTurboDevTest,
 } from 'next-test-utils'
 
+const shouldRunTurboDev = shouldRunTurboDevTest()
 const appDir = join(__dirname, '..')
 let appPort
 let app
@@ -27,11 +29,19 @@ async function get$(path, query) {
 }
 
 describe('TypeScript Features', () => {
-  describe('default behavior', () => {
+  describe.each([
+    ['dev', false],
+    ['turbo', true],
+  ])('default behavior %s', (_name, turbo) => {
+    if (!!turbo && !shouldRunTurboDev) {
+      return
+    }
+
     beforeAll(async () => {
       output = ''
       appPort = await findPort()
       app = await launchApp(appDir, appPort, {
+        turbo: !!turbo,
         onStdout: handleOutput,
         onStderr: handleOutput,
       })
@@ -92,7 +102,7 @@ export default function EvilPage(): JSX.Element {
 }
 `
         )
-        app = await launchApp(appDir, appPort)
+        app = await launchApp(appDir, appPort, { turbo })
 
         const $ = await get$('/hello')
         expect($('body').text()).toMatch(/Hello World/)

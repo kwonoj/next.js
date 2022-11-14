@@ -10,8 +10,10 @@ import {
   initNextServerScript,
   nextBuild,
   nextStart,
+  shouldRunTurboDevTest,
 } from 'next-test-utils'
 
+const shouldRunTurboDev = shouldRunTurboDevTest()
 const appDir = join(__dirname, '..')
 const warningText = `You are using a non-standard "NODE_ENV" value in your environment`
 
@@ -33,34 +35,55 @@ const startServer = async (optEnv = {}, opts) => {
 }
 
 describe('Non-Standard NODE_ENV', () => {
-  it('should not show the warning with no NODE_ENV set', async () => {
-    let output = ''
+  it.each([
+    ['dev', false],
+    ['turbo', true],
+  ])(
+    'should not show the warning with no NODE_ENV set %s',
+    async (_name, turbo) => {
+      if (!!turbo && !shouldRunTurboDev) {
+        return
+      }
+      let output = ''
 
-    app = await launchApp(appDir, await findPort(), {
-      onStderr(msg) {
-        output += msg || ''
-      },
-    })
-    await waitFor(2000)
-    await killApp(app)
-    expect(output).not.toContain(warningText)
-  })
+      app = await launchApp(appDir, await findPort(), {
+        turbo: !!turbo,
+        onStderr(msg) {
+          output += msg || ''
+        },
+      })
+      await waitFor(2000)
+      await killApp(app)
+      expect(output).not.toContain(warningText)
+    }
+  )
 
-  it('should not show the warning with NODE_ENV set to valid value', async () => {
-    let output = ''
+  it.each([
+    ['dev', false],
+    ['turbo', true],
+  ])(
+    'should not show the warning with NODE_ENV set to valid value %s',
+    async (_name, turbo) => {
+      if (!!turbo && !shouldRunTurboDev) {
+        return
+      }
 
-    app = await launchApp(appDir, await findPort(), {
-      env: {
-        NODE_ENV: 'development',
-      },
-      onStderr(msg) {
-        output += msg || ''
-      },
-    })
-    await waitFor(2000)
-    await killApp(app)
-    expect(output).not.toContain(warningText)
-  })
+      let output = ''
+
+      app = await launchApp(appDir, await findPort(), {
+        turbo: !!turbo,
+        env: {
+          NODE_ENV: 'development',
+        },
+        onStderr(msg) {
+          output += msg || ''
+        },
+      })
+      await waitFor(2000)
+      await killApp(app)
+      expect(output).not.toContain(warningText)
+    }
+  )
 
   it('should not show the warning with NODE_ENV set to valid value (custom server)', async () => {
     let output = ''
@@ -103,21 +126,32 @@ describe('Non-Standard NODE_ENV', () => {
     }
   })
 
-  it('should show the warning with NODE_ENV set to invalid value', async () => {
-    let output = ''
+  it.each([
+    ['dev', false],
+    ['turbo', true],
+  ])(
+    'should show the warning with NODE_ENV set to invalid value %s',
+    async (_name, turbo) => {
+      if (!!turbo && !shouldRunTurboDev) {
+        return
+      }
 
-    app = await launchApp(appDir, await findPort(), {
-      env: {
-        NODE_ENV: 'abc',
-      },
-      onStderr(msg) {
-        output += msg || ''
-      },
-    })
-    await waitFor(2000)
-    await killApp(app)
-    expect(output).toContain(warningText)
-  })
+      let output = ''
+
+      app = await launchApp(appDir, await findPort(), {
+        turbo: !!turbo,
+        env: {
+          NODE_ENV: 'abc',
+        },
+        onStderr(msg) {
+          output += msg || ''
+        },
+      })
+      await waitFor(2000)
+      await killApp(app)
+      expect(output).toContain(warningText)
+    }
+  )
 
   it('should show the warning with NODE_ENV set to invalid value (custom server)', async () => {
     let output = ''
@@ -137,21 +171,32 @@ describe('Non-Standard NODE_ENV', () => {
     expect(output).toContain(warningText)
   })
 
-  it('should show the warning with NODE_ENV set to production with next dev', async () => {
-    let output = ''
+  it.each([
+    ['dev', false],
+    ['turbo', true],
+  ])(
+    'should show the warning with NODE_ENV set to production with next %s',
+    async (_name, turbo) => {
+      if (!!turbo && !shouldRunTurboDev) {
+        return
+      }
 
-    app = await launchApp(appDir, await findPort(), {
-      env: {
-        NODE_ENV: 'production',
-      },
-      onStderr(msg) {
-        output += msg || ''
-      },
-    })
-    await waitFor(2000)
-    await killApp(app)
-    expect(output).toContain(warningText)
-  })
+      let output = ''
+
+      app = await launchApp(appDir, await findPort(), {
+        turbo: !!turbo,
+        env: {
+          NODE_ENV: 'production',
+        },
+        onStderr(msg) {
+          output += msg || ''
+        },
+      })
+      await waitFor(2000)
+      await killApp(app)
+      expect(output).toContain(warningText)
+    }
+  )
 
   it('should show the warning with NODE_ENV set to development with next build', async () => {
     const { stderr } = await nextBuild(appDir, [], {

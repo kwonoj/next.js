@@ -1,8 +1,15 @@
 /* eslint-env jest */
 
 import { join } from 'path'
-import { renderViaHTTP, findPort, launchApp, killApp } from 'next-test-utils'
+import {
+  renderViaHTTP,
+  findPort,
+  launchApp,
+  killApp,
+  shouldRunTurboDevTest,
+} from 'next-test-utils'
 
+const shouldRunTurboDev = shouldRunTurboDevTest()
 const context = {
   output: '',
 }
@@ -11,10 +18,18 @@ const collectOutput = (message) => {
   context.output += message
 }
 
-describe('Document and App', () => {
+describe.each([
+  ['dev', false],
+  ['turbo', true],
+])('Document and App %s', (_name, turbo) => {
+  if (!!turbo && !shouldRunTurboDev) {
+    return
+  }
+
   beforeAll(async () => {
     context.appPort = await findPort()
     context.server = await launchApp(join(__dirname, '../'), context.appPort, {
+      turbo: !!turbo,
       onStdout: collectOutput,
       onStderr: collectOutput,
     })

@@ -9,9 +9,11 @@ import {
   launchApp,
   nextBuild,
   waitFor,
+  shouldRunTurboDevTest,
 } from 'next-test-utils'
 import webdriver from 'next-webdriver'
 
+const shouldRunTurboDev = shouldRunTurboDevTest()
 let app
 let appPort
 const appDir = path.join(__dirname, '..')
@@ -74,11 +76,19 @@ function runTests({ dev }) {
 }
 
 describe('Conflict between app file and page file', () => {
-  describe('next dev', () => {
+  describe.each([
+    ['dev', false],
+    ['turbo', true],
+  ])('next %s', (_name, turbo) => {
+    if (!!turbo && !shouldRunTurboDev) {
+      return
+    }
+
     beforeAll(async () => {
       output = ''
       appPort = await findPort()
       app = await launchApp(appDir, appPort, {
+        turbo: !!turbo,
         onStdout(msg) {
           output += msg || ''
         },

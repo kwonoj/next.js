@@ -11,11 +11,13 @@ import {
   nextBuild,
   nextStart,
   renderViaHTTP,
+  shouldRunTurboDevTest,
 } from 'next-test-utils'
 import webdriver from 'next-webdriver'
 import { join } from 'path'
 import qs from 'querystring'
 
+const shouldRunTurboDev = shouldRunTurboDevTest()
 const appDir = join(__dirname, '..')
 
 async function getBuildId() {
@@ -267,11 +269,18 @@ function runTests(startServer = nextStart) {
 }
 
 describe('Prerender Preview Mode', () => {
-  describe('Development Mode', () => {
+  describe.each([
+    ['dev', false],
+    ['turbo', true],
+  ])('%s Mode', (_name, turbo) => {
+    if (!!turbo && !shouldRunTurboDev) {
+      return
+    }
+
     let appPort, app
     it('should start development application', async () => {
       appPort = await findPort()
-      app = await launchApp(appDir, appPort)
+      app = await launchApp(appDir, appPort, { turbo })
     })
 
     let previewCookieString
@@ -290,7 +299,7 @@ describe('Prerender Preview Mode', () => {
 
     it('should return cookies to be expired after dev server reboot', async () => {
       await killApp(app)
-      app = await launchApp(appDir, appPort)
+      app = await launchApp(appDir, appPort, { turbo })
 
       const res = await fetchViaHTTP(
         appPort,

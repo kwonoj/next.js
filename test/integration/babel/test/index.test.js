@@ -7,17 +7,28 @@ import {
   findPort,
   launchApp,
   killApp,
+  shouldRunTurboDevTest,
 } from 'next-test-utils'
 
 // test suits
 import rendering from './rendering'
 
+const shouldRunTurboDev = shouldRunTurboDevTest()
 const context = {}
 
-describe('Babel', () => {
+describe.each([
+  ['dev', false],
+  ['turbo', true],
+])('Babel %s', (_name, turbo) => {
+  if (!!turbo && !shouldRunTurboDev) {
+    return
+  }
+
   beforeAll(async () => {
     context.appPort = await findPort()
-    context.server = await launchApp(join(__dirname, '../'), context.appPort)
+    context.server = await launchApp(join(__dirname, '../'), context.appPort, {
+      turbo: !!turbo,
+    })
 
     // pre-build all pages at the start
     await Promise.all([renderViaHTTP(context.appPort, '/')])

@@ -9,6 +9,7 @@ import {
   renderViaHTTP,
   nextStart,
   check,
+  shouldRunTurboDevTest,
 } from 'next-test-utils'
 import { join } from 'path'
 import {
@@ -17,18 +18,20 @@ import {
 } from '../../../../packages/next/dist/lib/constants'
 import { PHASE_PRODUCTION_BUILD } from '../../../../packages/next/shared/lib/constants'
 
+const shouldRunTurboDev = shouldRunTurboDevTest()
 const appDir = join(__dirname, '..')
 const indexPage = join(appDir, 'pages/index.js')
 let app
 let appPort
 let origIndexPage = ''
 
-const runTests = (isDev = false) => {
+const runTests = (isDev = false, turbo) => {
   const getStderr = async () => {
     if (isDev) {
       let stderr = ''
       appPort = await findPort()
       app = await launchApp(appDir, appPort, {
+        turbo: !!turbo,
         onStderr(msg) {
           stderr += msg || ''
         },
@@ -129,8 +132,15 @@ describe('GS(S)P Page Errors', () => {
   })
   afterAll(() => fs.writeFile(indexPage, origIndexPage))
 
-  describe('dev mode', () => {
-    runTests(true)
+  describe.each([
+    ['dev', false],
+    ['turbo', true],
+  ])('%s mode', (_name, turbo) => {
+    if (!!turbo && !shouldRunTurboDev) {
+      return
+    }
+
+    runTests(true, turbo)
   })
 
   describe('build mode', () => {
@@ -150,7 +160,7 @@ describe('GS(S)P Page Errors', () => {
               if(process.env.NEXT_PHASE === "${PHASE_PRODUCTION_BUILD}") {
                 return { props: { foo: 'bar' }, revalidate: 1 }
               }
-    
+
               throw new Error("Oops")
             }
             `

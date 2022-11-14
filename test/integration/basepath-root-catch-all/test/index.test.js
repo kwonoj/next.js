@@ -4,12 +4,14 @@ import {
   killApp,
   nextStart,
   launchApp,
+  shouldRunTurboDevTest,
 } from 'next-test-utils'
 import webdriver from 'next-webdriver'
 import { join } from 'path'
 import fs from 'fs-extra'
 import url from 'url'
 
+const shouldRunTurboDev = shouldRunTurboDevTest()
 let app
 let appPort
 let buildId
@@ -27,12 +29,19 @@ const runTests = () => {
   })
 }
 
-describe('dev mode', () => {
+describe.each([
+  ['dev', false],
+  ['turbo', true],
+])('%s mode', (_name, turbo) => {
+  if (!!turbo && !shouldRunTurboDev) {
+    return
+  }
+
   beforeAll(async () => {
     await nextBuild(appDir)
     appPort = await findPort()
     buildId = 'development'
-    app = await launchApp(appDir, appPort)
+    app = await launchApp(appDir, appPort, { turbo })
   })
   afterAll(() => killApp(app))
   runTests()

@@ -10,11 +10,13 @@ import {
   nextBuild,
   nextStart,
   waitFor,
+  shouldRunTurboDevTest,
 } from 'next-test-utils'
 import { remove } from 'fs-extra'
 
 jest.setTimeout(1000 * 60 * 2)
 
+const shouldRunTurboDev = shouldRunTurboDevTest()
 const context = {
   appDir: join(__dirname, '../'),
   logs: { output: '', stdout: '', stderr: '' },
@@ -78,8 +80,20 @@ describe('Edge runtime configurable guards', () => {
       `)
     })
 
-    it('warns in dev for allowed code', async () => {
-      context.app = await launchApp(context.appDir, context.appPort, appOption)
+    it.each([
+      ['dev', false],
+      ['turbo', true],
+    ])('warns in %s for allowed code', async (_name, turbo) => {
+      if (!!turbo && !shouldRunTurboDev) {
+        return
+      }
+
+      context.app = await launchApp(
+        context.appDir,
+        context.appPort,
+        appOption,
+        { turbo: !!turbo }
+      )
       const res = await fetchViaHTTP(context.appPort, middlewareUrl)
       await waitFor(500)
       expect(res.status).toBe(200)
@@ -88,8 +102,20 @@ describe('Edge runtime configurable guards', () => {
       )
     })
 
-    it('warns in dev for unallowed code', async () => {
-      context.app = await launchApp(context.appDir, context.appPort, appOption)
+    it.each([
+      ['dev', false],
+      ['turbo', true],
+    ])('warns in %s for unallowed code', async (_name, turbo) => {
+      if (!!turbo && !shouldRunTurboDev) {
+        return
+      }
+
+      context.app = await launchApp(
+        context.appDir,
+        context.appPort,
+        appOption,
+        { turbo: !!turbo }
+      )
       const res = await fetchViaHTTP(context.appPort, routeUrl)
       await waitFor(500)
       expect(res.status).toBe(200)
@@ -197,8 +223,20 @@ describe('Edge runtime configurable guards', () => {
   ])('$title with allowed, used dynamic code', ({ init, url }) => {
     beforeEach(() => init())
 
-    it('still warns in dev at runtime', async () => {
-      context.app = await launchApp(context.appDir, context.appPort, appOption)
+    it.each([
+      ['dev', false],
+      ['turbo', true],
+    ])('still warns in %s at runtime', async (_name, turbo) => {
+      if (!!turbo && !shouldRunTurboDev) {
+        return
+      }
+
+      context.app = await launchApp(
+        context.appDir,
+        context.appPort,
+        appOption,
+        { turbo: !!turbo }
+      )
       const res = await fetchViaHTTP(context.appPort, url)
       await waitFor(500)
       expect(res.status).toBe(200)
@@ -364,8 +402,20 @@ describe('Edge runtime configurable guards', () => {
   ])('$title with unallowed, used dynamic code', ({ init, url }) => {
     beforeEach(() => init())
 
-    it('warns in dev at runtime', async () => {
-      context.app = await launchApp(context.appDir, context.appPort, appOption)
+    it.each([
+      ['dev', false],
+      ['turbo', true],
+    ])('warns in %s at runtime', async (_name, turbo) => {
+      if (!!turbo && !shouldRunTurboDev) {
+        return
+      }
+
+      context.app = await launchApp(
+        context.appDir,
+        context.appPort,
+        appOption,
+        { turbo: !!turbo }
+      )
       const res = await fetchViaHTTP(context.appPort, url)
       await waitFor(500)
       expect(res.status).toBe(200)
@@ -418,8 +468,20 @@ describe('Edge runtime configurable guards', () => {
   ])('$title with use of Function as a type', ({ init, url }) => {
     beforeEach(() => init())
 
-    it('does not warn in dev at runtime', async () => {
-      context.app = await launchApp(context.appDir, context.appPort, appOption)
+    it.each([
+      ['dev', false],
+      ['turbo', true],
+    ])('does not warn in %s at runtime', async (_name, turbo) => {
+      if (!!turbo && !shouldRunTurboDev) {
+        return
+      }
+
+      context.app = await launchApp(
+        context.appDir,
+        context.appPort,
+        appOption,
+        { turbo: !!turbo }
+      )
       const res = await fetchViaHTTP(context.appPort, url)
       await waitFor(500)
       expect(res.status).toBe(200)

@@ -8,10 +8,12 @@ import {
   launchApp,
   nextBuild,
   nextStart,
+  shouldRunTurboDevTest,
 } from 'next-test-utils'
 import webdriver from 'next-webdriver'
 import { join } from 'path'
 
+const shouldRunTurboDev = shouldRunTurboDevTest()
 const fixturesDir = join(__dirname, '../..', 'scss-fixtures')
 
 describe('SCSS Support', () => {
@@ -346,7 +348,14 @@ describe('SCSS Support', () => {
     })
   })
 
-  describe('Ordering with styled-jsx (dev)', () => {
+  describe.each([
+    ['dev', false],
+    ['turbo', true],
+  ])('Ordering with styled-jsx (%s)', (_name, turbo) => {
+    if (!!turbo && !shouldRunTurboDev) {
+      return
+    }
+
     const appDir = join(fixturesDir, 'with-styled-jsx')
 
     let appPort
@@ -354,7 +363,7 @@ describe('SCSS Support', () => {
     beforeAll(async () => {
       await remove(join(appDir, '.next'))
       appPort = await findPort()
-      app = await launchApp(appDir, appPort)
+      app = await launchApp(appDir, appPort, { turbo })
     })
     afterAll(async () => {
       await killApp(app)

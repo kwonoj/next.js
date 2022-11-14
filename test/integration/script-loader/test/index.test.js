@@ -11,10 +11,12 @@ import {
   findPort,
   launchApp,
   killApp,
+  shouldRunTurboDevTest,
 } from 'next-test-utils'
 import webdriver from 'next-webdriver'
 import cheerio from 'cheerio'
 
+const shouldRunTurboDev = shouldRunTurboDevTest()
 let appDir = join(__dirname, '../base')
 let appWithPartytownMissingDir = join(__dirname, '../partytown-missing')
 let server
@@ -295,10 +297,17 @@ const runTests = (isDev = false) => {
   })
 }
 
-describe('Next.js Script - Primary Strategies - Strict Mode', () => {
+describe.each([
+  ['dev', false],
+  ['turbo', true],
+])('Next.js Script - Primary Strategies - Strict Mode %s', (_name, turbo) => {
+  if (!!turbo && !shouldRunTurboDev) {
+    return
+  }
+
   beforeAll(async () => {
     appPort = await findPort()
-    server = await launchApp(appDir, appPort)
+    server = await launchApp(appDir, appPort, { turbo })
   })
 
   afterAll(async () => {

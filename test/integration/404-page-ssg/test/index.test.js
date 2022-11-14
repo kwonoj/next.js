@@ -10,8 +10,10 @@ import {
   nextBuild,
   renderViaHTTP,
   fetchViaHTTP,
+  shouldRunTurboDevTest,
 } from 'next-test-utils'
 
+const shouldRunTurboDev = shouldRunTurboDevTest()
 const appDir = join(__dirname, '../')
 const gip404Err =
   /`pages\/404` can not have getInitialProps\/getServerSideProps/
@@ -111,12 +113,20 @@ describe('404 Page Support SSG', () => {
     runTests()
   })
 
-  describe('dev mode', () => {
+  describe.each([
+    ['dev', false],
+    ['turbo', true],
+  ])('dev mode %s', (_name, turbo) => {
+    if (!!turbo && !shouldRunTurboDev) {
+      return
+    }
+
     beforeAll(async () => {
       appPort = await findPort()
       stderr = ''
       stdout = ''
       app = await launchApp(appDir, appPort, {
+        turbo: !!turbo,
         onStdout(msg) {
           stdout += msg
         },

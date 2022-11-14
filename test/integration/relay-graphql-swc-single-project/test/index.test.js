@@ -8,8 +8,10 @@ import {
   nextBuild,
   nextStart,
   renderViaHTTP,
+  shouldRunTurboDevTest,
 } from 'next-test-utils'
 
+const shouldRunTurboDev = shouldRunTurboDevTest()
 let app
 let appPort
 const appDir = join(__dirname, '../')
@@ -31,11 +33,18 @@ const runRelayCompiler = () => {
 }
 
 describe('Relay Compiler Transform - Single Project Config', () => {
-  describe('dev mode', () => {
+  describe.each([
+    ['dev', false],
+    ['turbo', true],
+  ])('%s mode', (_name, turbo) => {
+    if (!!turbo && !shouldRunTurboDev) {
+      return
+    }
+
     beforeAll(async () => {
       runRelayCompiler()
       appPort = await findPort()
-      app = await launchApp(appDir, appPort, { cwd: appDir })
+      app = await launchApp(appDir, appPort, { turbo: !!turbo, cwd: appDir })
     })
     afterAll(() => killApp(app))
 

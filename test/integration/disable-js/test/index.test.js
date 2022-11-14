@@ -11,8 +11,10 @@ import {
   findPort,
   launchApp,
   killApp,
+  shouldRunTurboDevTest,
 } from 'next-test-utils'
 
+const shouldRunTurboDev = shouldRunTurboDevTest()
 const appDir = join(__dirname, '../')
 let appPort
 let server
@@ -60,13 +62,20 @@ describe('disabled runtime JS', () => {
     })
   })
 
-  describe('dev mode', () => {
+  describe.each([
+    ['dev', false],
+    ['turbo', true],
+  ])('%s mode', (_name, turbo) => {
+    if (!!turbo && !shouldRunTurboDev) {
+      return
+    }
+
     let appPort
     let app
 
     beforeAll(async () => {
       appPort = await findPort()
-      app = await launchApp(join(__dirname, '../'), appPort)
+      app = await launchApp(join(__dirname, '../'), appPort, { turbo: !!turbo })
     })
 
     afterAll(() => killApp(app))

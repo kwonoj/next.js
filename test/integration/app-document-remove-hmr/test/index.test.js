@@ -3,20 +3,34 @@
 import fs from 'fs-extra'
 import { join } from 'path'
 import webdriver from 'next-webdriver'
-import { killApp, findPort, launchApp, check } from 'next-test-utils'
+import {
+  killApp,
+  findPort,
+  launchApp,
+  check,
+  shouldRunTurboDevTest,
+} from 'next-test-utils'
 
 const appDir = join(__dirname, '../')
 const appPage = join(appDir, 'pages/_app.js')
 const indexPage = join(appDir, 'pages/index.js')
 const documentPage = join(appDir, 'pages/_document.js')
 
+const shouldRunTurboDev = shouldRunTurboDevTest()
 let appPort
 let app
 
-describe('_app removal HMR', () => {
+describe.each([
+  ['dev', false],
+  ['turbo', true],
+])('_app removal HMR %s', (_name, turbo) => {
+  if (!!turbo && !shouldRunTurboDev) {
+    return
+  }
+
   beforeAll(async () => {
     appPort = await findPort()
-    app = await launchApp(appDir, appPort)
+    app = await launchApp(appDir, appPort, { turbo })
   })
   afterAll(() => killApp(app))
 

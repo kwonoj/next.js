@@ -9,8 +9,10 @@ import {
   renderViaHTTP,
   nextBuild,
   nextStart,
+  shouldRunTurboDevTest,
 } from 'next-test-utils'
 
+const shouldRunTurboDev = shouldRunTurboDevTest()
 const appDir = join(__dirname, '../')
 let appPort
 let app
@@ -51,11 +53,19 @@ function runTests() {
 }
 
 describe('Fetch polyfill with ky-universal', () => {
-  describe('dev support', () => {
+  describe.each([
+    ['dev', false],
+    ['turbo', true],
+  ])('%s support', (_name, turbo) => {
+    if (!!turbo && !shouldRunTurboDev) {
+      return
+    }
+
     beforeAll(async () => {
       appPort = await findPort()
       await startApiServer()
       app = await launchApp(appDir, appPort, {
+        turbo: !!turbo,
         env: {
           NEXT_PUBLIC_API_PORT: apiServerPort,
         },
