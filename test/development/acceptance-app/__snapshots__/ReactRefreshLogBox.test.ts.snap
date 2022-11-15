@@ -1,13 +1,13 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
-exports[`ReactRefreshLogBox app boundaries 1`] = `
+exports[`ReactRefreshLogBox app dev boundaries 1`] = `
 "FunctionDefault.js (1:50) @ FunctionDefault
 
 > 1 | export default function FunctionDefault() { throw new Error('no'); }
     |                                                  ^"
 `;
 
-exports[`ReactRefreshLogBox app conversion to class component (1) 1`] = `
+exports[`ReactRefreshLogBox app dev conversion to class component (1) 1`] = `
 "Child.js (5:18) @ ClickCount.render
 
   3 |   export default class ClickCount extends Component {
@@ -19,7 +19,7 @@ exports[`ReactRefreshLogBox app conversion to class component (1) 1`] = `
   8 | "
 `;
 
-exports[`ReactRefreshLogBox app css syntax errors 1`] = `
+exports[`ReactRefreshLogBox app dev css syntax errors 1`] = `
 "./index.module.css:1:1
 Syntax error: Selector \\"button\\" is not pure (pure selectors must contain at least one local class or id)
 
@@ -27,23 +27,23 @@ Syntax error: Selector \\"button\\" is not pure (pure selectors must contain at 
     | ^"
 `;
 
-exports[`ReactRefreshLogBox app logbox: anchors links in error messages 1`] = `"Error: end http://nextjs.org"`;
+exports[`ReactRefreshLogBox app dev logbox: anchors links in error messages 1`] = `"Error: end http://nextjs.org"`;
 
-exports[`ReactRefreshLogBox app logbox: anchors links in error messages 2`] = `"http://nextjs.org/"`;
+exports[`ReactRefreshLogBox app dev logbox: anchors links in error messages 2`] = `"http://nextjs.org/"`;
 
-exports[`ReactRefreshLogBox app logbox: anchors links in error messages 3`] = `"Error: http://nextjs.org start"`;
+exports[`ReactRefreshLogBox app dev logbox: anchors links in error messages 3`] = `"Error: http://nextjs.org start"`;
 
-exports[`ReactRefreshLogBox app logbox: anchors links in error messages 4`] = `"http://nextjs.org/"`;
+exports[`ReactRefreshLogBox app dev logbox: anchors links in error messages 4`] = `"http://nextjs.org/"`;
 
-exports[`ReactRefreshLogBox app logbox: anchors links in error messages 5`] = `"Error: middle http://nextjs.org end"`;
+exports[`ReactRefreshLogBox app dev logbox: anchors links in error messages 5`] = `"Error: middle http://nextjs.org end"`;
 
-exports[`ReactRefreshLogBox app logbox: anchors links in error messages 6`] = `"http://nextjs.org/"`;
+exports[`ReactRefreshLogBox app dev logbox: anchors links in error messages 6`] = `"http://nextjs.org/"`;
 
-exports[`ReactRefreshLogBox app logbox: anchors links in error messages 8`] = `"http://nextjs.org/"`;
+exports[`ReactRefreshLogBox app dev logbox: anchors links in error messages 8`] = `"http://nextjs.org/"`;
 
-exports[`ReactRefreshLogBox app logbox: anchors links in error messages 9`] = `"http://example.com/"`;
+exports[`ReactRefreshLogBox app dev logbox: anchors links in error messages 9`] = `"http://example.com/"`;
 
-exports[`ReactRefreshLogBox app logbox: can recover from a component error 1`] = `
+exports[`ReactRefreshLogBox app dev logbox: can recover from a component error 1`] = `
 "child.js (4:16) @ Child
 
   2 |   // hello
@@ -54,7 +54,7 @@ exports[`ReactRefreshLogBox app logbox: can recover from a component error 1`] =
   6 | "
 `;
 
-exports[`ReactRefreshLogBox app logbox: can recover from a syntax error without losing state 1`] = `
+exports[`ReactRefreshLogBox app dev logbox: can recover from a syntax error without losing state 1`] = `
 "./index.js
 Error: 
   x Unexpected eof
@@ -67,7 +67,7 @@ Caused by:
     1: Syntax Error"
 `;
 
-exports[`ReactRefreshLogBox app module init error not shown 1`] = `
+exports[`ReactRefreshLogBox app dev module init error not shown 1`] = `
 "index.js (4:14) @ eval
 
   2 | // top offset for snapshot
@@ -79,7 +79,7 @@ exports[`ReactRefreshLogBox app module init error not shown 1`] = `
   7 |     return <h1>Default Export</h1>;"
 `;
 
-exports[`ReactRefreshLogBox app render error not shown right after syntax error 1`] = `
+exports[`ReactRefreshLogBox app dev render error not shown right after syntax error 1`] = `
 "index.js (6:18) @ ClassDefault.render
 
   4 | class ClassDefault extends React.Component {
@@ -91,7 +91,7 @@ exports[`ReactRefreshLogBox app render error not shown right after syntax error 
   9 | }"
 `;
 
-exports[`ReactRefreshLogBox app should strip whitespace correctly with newline 1`] = `
+exports[`ReactRefreshLogBox app dev should strip whitespace correctly with newline 1`] = `
 "index.js (9:34) @ onClick
 
    7 | 
@@ -103,7 +103,7 @@ exports[`ReactRefreshLogBox app should strip whitespace correctly with newline 1
   12 | </a>"
 `;
 
-exports[`ReactRefreshLogBox app stuck error 1`] = `
+exports[`ReactRefreshLogBox app dev stuck error 1`] = `
 "Foo.js (4:10) @ Foo
 
   2 |   // intentionally skips export
@@ -114,7 +114,7 @@ exports[`ReactRefreshLogBox app stuck error 1`] = `
   6 | "
 `;
 
-exports[`ReactRefreshLogBox app syntax > runtime error 1`] = `
+exports[`ReactRefreshLogBox app dev syntax > runtime error 1`] = `
 "index.js (6:16) @ eval
 
   4 | setInterval(() => {
@@ -126,7 +126,7 @@ exports[`ReactRefreshLogBox app syntax > runtime error 1`] = `
   9 |   return <div />"
 `;
 
-exports[`ReactRefreshLogBox app syntax > runtime error 2`] = `
+exports[`ReactRefreshLogBox app dev syntax > runtime error 2`] = `
 "./index.js
 Error: 
   x Expected '}', got '<eof>'
@@ -141,7 +141,7 @@ Caused by:
     2: Syntax Error"
 `;
 
-exports[`ReactRefreshLogBox app syntax > runtime error 3`] = `
+exports[`ReactRefreshLogBox app dev syntax > runtime error 3`] = `
 "./index.js
 Error: 
   x Expected '}', got '<eof>'
@@ -156,7 +156,7 @@ Caused by:
     2: Syntax Error"
 `;
 
-exports[`ReactRefreshLogBox app unterminated JSX 1`] = `
+exports[`ReactRefreshLogBox app dev unterminated JSX 1`] = `
 "./index.js
 Error: 
   x Unexpected token. Did you mean \`{'}'}\` or \`&rbrace;\`?
