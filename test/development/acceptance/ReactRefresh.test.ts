@@ -26,7 +26,11 @@ describe.each([
   afterAll(() => next.destroy())
 
   test('can edit a component without losing state', async () => {
+    console.log(process.env)
+    console.log('starting sandbox')
     const { session, cleanup } = await sandbox(next)
+
+    console.log('sandbox ready')
 
     await session.patch(
       'index.js',
@@ -46,11 +50,17 @@ describe.each([
       `
     )
 
+    console.log('session patched')
+
+    console.log('session evaluate start')
     await session.evaluate(() => document.querySelector('button').click())
     expect(
       await session.evaluate(() => document.querySelector('p').textContent)
     ).toBe('1')
 
+    console.log('session evaluate done')
+
+    console.log('session patch start 2')
     await session.patch(
       'index.js',
       `
@@ -69,6 +79,9 @@ describe.each([
       `
     )
 
+    console.log('session patch ready 2')
+
+    console.log('start evaluate 2')
     expect(
       await session.evaluate(() => document.querySelector('p').textContent)
     ).toBe('Count: 1')
@@ -77,7 +90,11 @@ describe.each([
       await session.evaluate(() => document.querySelector('p').textContent)
     ).toBe('Count: 2')
 
+    console.log('evaluate done 2')
+
+    console.log('start cleanup')
     await cleanup()
+    console.log('done cleanup')
   })
 
   test('cyclic dependencies', async () => {
