@@ -271,6 +271,7 @@ async function main() {
 
       const shouldRecordTestWithReplay = process.env.RECORD_REPLAY && isRetry
 
+      console.log('web544Running test:', test)
       const child = spawn(
         jestPath,
         [
