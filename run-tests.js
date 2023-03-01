@@ -381,9 +381,7 @@ async function main() {
       await sema.acquire()
       let passed = false
 
-      const shouldSkipRetries = skipRetryTestManifest.find((t) =>
-        t.includes(test)
-      )
+      const shouldSkipRetries = true
       const numRetries = shouldSkipRetries ? 0 : originalRetries
       if (shouldSkipRetries) {
         console.log(`Skipping retry for ${test} due to skipRetryTestManifest`)
@@ -440,7 +438,7 @@ async function main() {
       }
 
       // Emit test output if test failed or if we're continuing tests on error
-      if ((!passed || shouldContinueTestsOnError) && isTestJob) {
+      if (false) {
         try {
           const testsOutput = await fs.readFile(`${test}${RESULTS_EXT}`, 'utf8')
           console.log(
