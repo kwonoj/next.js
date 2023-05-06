@@ -240,6 +240,9 @@ const nextDev: CliCommand = async (argv) => {
       isDev: true,
     })
 
+    const shouldInitTracingSubscriber =
+      rawNextConfig.experimental?.swcTraceProfiling
+
     const distDir = path.join(dir, rawNextConfig.distDir || '.next')
     const { pagesDir, appDir } = findPagesDir(
       dir,
